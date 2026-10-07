@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- 개발용: ?t=주제id 로 한 주제를 불러와 모든 단계를 빠르게 돌려 본다. window.__report 에 결과 -->
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="../css/style.css">
+<style>body{padding:10px} svg{width:720px;height:440px;background:var(--stage);border:1px solid var(--line)} #cap{height:24px}</style></head>
+<body><svg id="s"></svg><div id="cap"></div><div id="st"></div>
+<script type="module">
+import { Player } from '../js/engine.js';
+const id = new URLSearchParams(location.search).get('t');
+const topic = (await import(`../js/topics/${id}.js`)).default;
+const errors = [];
+addEventListener('error', (e) => errors.push(String(e.message)));
+const oe = console.error; console.error = (...x) => { errors.push(x.map(String).join(' ')); oe(...x); };
+const p = new Player(document.getElementById('s'), {
+  onCaption: (c) => (document.getElementById('cap').textContent = c),
+  onStep: (n) => (document.getElementById('st').textContent = `step ${n + 1}/${topic.steps.length}: ${topic.steps[n].t}`),
+});
+p.speed = Number(new URLSearchParams(location.search).get('speed') || 6);
+p.load(topic);
+window.__player = p;
+window.__topic = topic;
+window.__errors = errors;
+/** 단계 n을 애니메이션으로 끝까지 재생하고 기다린다 */
+window.__playStep = async (n) => {
+  if (n === 0) p.next(); else p.goto(n);
+  await new Promise((r) => setTimeout(r, 50));
+  const t0 = performance.now();
+  while ((p.running || !p.ready) && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 30));
+  return { step: p.step, timeout: performance.now() - t0 >= 30000 };
+};
+window.__ready = true;
+</script></body></html>

@@ -1,0 +1,21 @@
+{
+  "name": "packet-factory",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "IT 개념(CI/CD, 로드밸런서, 메시지 큐, CDN, 레이트 리미터)을 3D 공장 라인 애니메이션으로 보여 주는 학습 사이트",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.8"
+  }
+}
