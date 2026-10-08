@@ -1,5 +1,5 @@
 import { Player } from './engine.js';
-import { loadTopics, LEVELS, FACTORY } from './topics/index.js';
+import { loadTopics, LEVELS, FACTORY, COURSES } from './topics/index.js';
 
 const app = document.getElementById('app');
 const store = {
@@ -16,6 +16,8 @@ let offKeys = null;
 const done = new Set(store.get('done', []));
 const markDone = (id) => { if (!done.has(id)) { done.add(id); store.set('done', [...done]); } };
 const quizBest = store.get('quiz', {});
+let curCourse = store.get('course', null);
+const courseTopics = (c) => c.ids.map((id) => TOPICS.find((t) => t.id === id)).filter(Boolean);
 
 const ICON = {
   first: '<svg viewBox="0 0 24 24"><path d="M5 5h2v14H5zM19 5v14L8 12z"/></svg>',
@@ -44,11 +46,13 @@ function cleanup() {
 }
 function route() {
   cleanup();
-  const m = location.hash.match(/^#\/t\/([\w-]+)/);
+  const m = location.hash.match(/^#\/t\/([\w-]+)(?:\/(\d+))?/);
   const t = m && TOPICS.find((x) => x.id === m[1]);
   document.querySelectorAll('[data-nav]').forEach((a) => a.removeAttribute('aria-current'));
-  if (t) renderTopic(t);
-  else { renderHome(); document.querySelector('[data-nav="home"]').setAttribute('aria-current', 'page'); }
+  const nav = (k) => document.querySelector(`[data-nav="${k}"]`)?.setAttribute('aria-current', 'page');
+  if (t) renderTopic(t, m[2] ? +m[2] : 0);
+  else if (location.hash.startsWith('#/terms')) { renderTerms(); nav('terms'); }
+  else { renderHome(); nav('home'); }
 }
 
 /* ---------- 처음 화면 ---------- */
@@ -77,6 +81,20 @@ function renderHome() {
       <div><b>② 재생하거나 한 단계씩</b><span>▶ 자동 재생, ◀ ▶ 로 앞뒤 단계를 오가며 다시 볼 수 있어요.</span></div>
       <div><b>③ 쉽게 / 자세히</b><span>비유 중심 설명과 실무 기술 설명을 바꿔 가며 읽어요.</span></div>
     </section>
+    <section class="courses" aria-labelledby="ch">
+      <div class="sec-h"><h2 id="ch">학습 코스</h2><p>목적에 맞춰 주제를 순서대로 묶었어요. 코스를 고르면 주제 화면 위에 "다음 주제"가 안내돼요.</p></div>
+      <div class="course-grid">${COURSES.map((c) => {
+        const ts = courseTopics(c), k = ts.filter((x) => done.has(x.id)).length;
+        const nx = ts.find((x) => !done.has(x.id)) || ts[0];
+        return `<article class="course${curCourse === c.id ? ' cur' : ''}" style="--cc:var(--${c.color})">
+          <h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p>
+          <div class="cbar" role="img" aria-label="${ts.length}개 중 ${k}개 완료"><i style="width:${ts.length ? (k / ts.length) * 100 : 0}%"></i></div>
+          <ol>${ts.map((x) => `<li class="${done.has(x.id) ? 'ok' : ''}"><a href="#/t/${x.id}" data-course="${c.id}">${esc(x.title.split(' — ')[0])}</a></li>`).join('')}</ol>
+          <a class="btn${k < ts.length ? ' main' : ''}" href="#/t/${nx.id}" data-course="${c.id}">${k === 0 ? '코스 시작' : k < ts.length ? `이어서 (${k}/${ts.length})` : '✓ 완주 · 다시 보기'}</a>
+        </article>`;
+      }).join('')}</div>
+    </section>
+    <div class="sec-h"><h2>모든 주제</h2></div>
     <div class="filters" role="group" aria-label="난이도 거르기">
       <button class="chip" data-f="0" aria-pressed="${filter === 0}">전체</button>
       ${Object.entries(LEVELS).map(([k, v]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === +k}" style="--lc:${lc(k)}"><i class="dot"></i>${v.name}</button>`).join('')}
@@ -118,6 +136,7 @@ function renderHome() {
     draw();
   }));
   app.querySelector('.search').addEventListener('input', (e) => { query = e.target.value; draw(); });
+  app.querySelectorAll('[data-course]').forEach((a) => a.addEventListener('click', () => { curCourse = a.dataset.course; store.set('course', curCourse); }));
 
   // 미리보기: DNS 주제를 조용히 반복 재생
   const demo = TOPICS.find((t) => t.id === 'dns') || TOPICS[0];
@@ -140,7 +159,7 @@ function renderHome() {
 }
 
 /* ---------- 주제 화면 ---------- */
-function renderTopic(t) {
+function renderTopic(t, startStep = 0) {
   const idx = TOPICS.indexOf(t), lv = LEVELS[t.level];
   const prev = TOPICS[idx - 1], next = TOPICS[idx + 1];
   let mode = store.get('mode', 'easy');
@@ -149,6 +168,7 @@ function renderTopic(t) {
   document.title = `${t.title} — 움직이는 IT`;
 
   app.innerHTML = `
+    ${courseBar(t)}
     <div class="crumb" style="--lc:${lc(t.level)}"><a href="#/">주제</a><span>›</span><span class="pill">${lv.name}</span><span>${esc(t.cat)}</span></div>
     <div class="t-head"><h1>${esc(t.title)}</h1><p>${esc(t.sub)}</p></div>
     <div class="learn">
@@ -173,6 +193,7 @@ function renderTopic(t) {
         </div>
         <section class="explain" aria-live="polite">
           <div class="h"><span class="k" id="ex-k"></span><b id="ex-t"></b>
+            <button type="button" class="linkbtn" id="b-link" title="이 단계 링크 복사">🔗 <span>링크</span></button>
             <span class="seg" role="group" aria-label="설명 수준">
               <button type="button" data-mode="easy" aria-pressed="${mode === 'easy'}">쉽게</button>
               <button type="button" data-mode="deep" aria-pressed="${mode === 'deep'}">자세히</button>
@@ -221,6 +242,7 @@ function renderTopic(t) {
 
   const p = new Player($('#stage'), {
     onStep(n) {
+      try { history.replaceState(null, '', `#/t/${t.id}${n ? '/' + (n + 1) : ''}`); } catch { /* 무시 */ }
       showText(n);
       $('#stepno').textContent = `STEP ${n + 1}/${t.steps.length}`;
       dots.forEach((d, i) => { d.classList.toggle('on', i === n); d.classList.toggle('done', i < n); });
@@ -247,6 +269,16 @@ function renderTopic(t) {
   player = p;
   p.speed = speed;
   p.load(t);
+  if (startStep > 1) p.goto(Math.min(startStep, t.steps.length) - 1, { animate: false });
+
+  $('#b-link').addEventListener('click', async () => {
+    const url = location.href.split('#')[0] + `#/t/${t.id}/${p.step + 1}`;
+    const lab = $('#b-link span');
+    try { await navigator.clipboard.writeText(url); lab.textContent = '복사됨'; }
+    catch { prompt('이 주소를 복사하세요', url); }
+    setTimeout(() => { lab.textContent = '링크'; }, 1600);
+  });
+  $('.coursebar .x')?.addEventListener('click', () => { curCourse = null; store.set('course', null); $('.coursebar').remove(); });
 
   const togglePlay = () => {
     if (p.paused) { p.paused = false; p.auto = true; p.onState(); if (p.ready && !p.running) p.play(); return; }
@@ -299,6 +331,63 @@ function renderTopic(t) {
   };
   document.addEventListener('keydown', onKey);
   offKeys = () => { document.removeEventListener('keydown', onKey); document.body.classList.remove('noscroll'); };
+}
+
+/* ---------- 코스 띠 ---------- */
+function courseBar(t) {
+  const c = COURSES.find((x) => x.id === curCourse);
+  if (!c) return '';
+  const ts = courseTopics(c), i = ts.indexOf(t);
+  if (i < 0) return '';
+  const nx = ts[i + 1];
+  return `<div class="coursebar" style="--cc:var(--${c.color})"><span class="cn">${esc(c.name)}</span>
+    <span class="cp">${i + 1} / ${ts.length}</span>
+    <span class="cd">${ts.map((x, j) => `<a href="#/t/${x.id}" class="${j === i ? 'on' : done.has(x.id) ? 'ok' : ''}" title="${esc(x.title)}" aria-label="${j + 1}. ${esc(x.title)}"></a>`).join('')}</span>
+    ${nx ? `<a class="cnx" href="#/t/${nx.id}">다음: ${esc(nx.title.split(' — ')[0])} →</a>` : '<span class="cnx">코스 마지막 주제예요 🎉</span>'}
+    <button type="button" class="x" aria-label="코스 안내 끄기" title="코스 안내 끄기">✕</button></div>`;
+}
+
+/* ---------- 용어 사전 ---------- */
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const SIMPLE = { 'ㄲ': 'ㄱ', 'ㄸ': 'ㄷ', 'ㅃ': 'ㅂ', 'ㅆ': 'ㅅ', 'ㅉ': 'ㅈ' };
+function initial(w) {
+  const ch = w.trim()[0] || '#', code = ch.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) { const c = CHO[Math.floor((code - 0xac00) / 588)]; return SIMPLE[c] || c; }
+  if (/[a-z]/i.test(ch)) return 'A–Z';
+  return '#';
+}
+function renderTerms() {
+  document.title = '용어 사전 — 움직이는 IT';
+  const map = new Map();
+  for (const t of TOPICS) for (const [w, d] of t.terms || []) {
+    const k = w.trim().toLowerCase();
+    if (!map.has(k)) map.set(k, { w: w.trim(), items: [] });
+    map.get(k).items.push({ d, t });
+  }
+  const all = [...map.values()].sort((a, b) => a.w.localeCompare(b.w, 'ko'));
+  const order = ['A–Z', ...'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ', '#'];
+  app.innerHTML = `
+    <div class="crumb"><a href="#/">주제</a><span>›</span><span>용어 사전</span></div>
+    <div class="t-head"><h1>용어 사전</h1><p>${TOPICS.length}개 주제에 나온 용어 ${all.length}개. 용어를 누르면 그 용어가 나오는 주제로 갈 수 있어요.</p></div>
+    <input class="search wide" type="search" id="tq" placeholder="용어나 설명으로 찾기 (예: TTL, 해시, 리더)" aria-label="용어 검색" autofocus>
+    <nav class="jump" id="jump" aria-label="첫 글자로 이동"></nav>
+    <div id="terms"></div>`;
+  const box = app.querySelector('#terms'), jump = app.querySelector('#jump');
+  const draw = (q) => {
+    q = q.trim().toLowerCase();
+    const hit = all.filter((e) => !q || e.w.toLowerCase().includes(q) || e.items.some((x) => x.d.toLowerCase().includes(q)));
+    const groups = new Map(order.map((g) => [g, []]));
+    hit.forEach((e) => groups.get(initial(e.w))?.push(e));
+    const used = order.filter((g) => groups.get(g).length);
+    jump.innerHTML = used.map((g, i) => `<a href="#tg-${i}" data-g="${i}">${g}</a>`).join('');
+    box.innerHTML = used.map((g, i) => `<section class="tgroup" id="tg-${i}"><h2>${g}</h2><dl>${groups.get(g).map((e) => `
+      <div class="term"><dt>${esc(e.w)}</dt>${e.items.map((x) => `<dd>${esc(x.d)} <a class="tlink" href="#/t/${x.t.id}" style="--lc:${lc(x.t.level)}">${esc(x.t.title.split(' — ')[0])}</a></dd>`).join('')}</div>`).join('')}</dl></section>`).join('')
+      || '<p class="empty">찾는 용어가 없어요.</p>';
+    jump.querySelectorAll('a').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); app.querySelector('#tg-' + a.dataset.g).scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+  };
+  draw('');
+  app.querySelector('#tq').addEventListener('input', (e) => draw(e.target.value));
+  window.scrollTo(0, 0);
 }
 
 /* ---------- 퀴즈 ---------- */
