@@ -1,6 +1,6 @@
 // 메시지 큐: 동기 호출 체인의 문제 → 큐에 넣고 바로 응답 → 경쟁 소비 → ACK·재전달 → 완충 → 멱등·DLQ → 발행/구독
 // 단계마다 무대를 새로 그린다. 메시지 번호·시간은 설명용 예시 값(고정)이다.
-const UX = 60, PX = 190, QL = 258, QR = 506, QY = 222, CY = 232;
+const UX = 56, PX = 196, QL = 258, QR = 506, QY = 222, CY = 232;
 const WX = 632, WY3 = [110, 222, 334];
 const SLOT = (i) => 482 - i * 40; // 0 = 맨 앞(워커 쪽), 왼쪽으로 갈수록 뒤
 const MAXS = 6; // 큐 안에 보이는 칸 수
@@ -8,14 +8,14 @@ const MAXS = 6; // 큐 안에 보이는 칸 수
 function wipe(a) { a.clear('zone', 'edge', 'node', 'pkt', 'top'); }
 
 function chip(a, label, x, y, color = 'violet') {
-  return a.packet(label, { at: [x, y], color, w: 40, h: 24, size: 11 });
+  return a.packet(label, { at: [x, y], color, w: 37, h: 24, size: 11 });
 }
 
 /** 주문 서버 → 큐 → 워커 기본 배치 */
 function base(a, wy = WY3, o = {}) {
   wipe(a);
-  a.node('u', UX, QY, { label: o.user || '사용자', icon: o.uicon || '🙂', color: 'blue', w: 88, h: 58 });
-  a.node('p', PX, QY, { label: '주문 서버', icon: '🛒', color: 'amber', w: 104, h: 64 });
+  a.node('u', UX, QY, { label: o.user || '사용자', icon: o.uicon || '🙂', color: 'blue', w: 84, h: 58 });
+  a.node('p', PX, QY, { label: '주문 서버', icon: '🛒', color: 'amber', w: 100, h: 64 });
   a.zone('qz', QL, QY - 34, QR - QL, 68, { label: '메시지 큐', color: 'violet' });
   a.text(QR - 10, QY - 20, '', { id: 'qmore', size: 11, anchor: 'end', weight: 700, cls: 'muted' });
   a.edge('u', 'p', { both: true });
@@ -125,39 +125,39 @@ export default {
         a.text(220, 288, '응답까지', { size: 11.5, cls: 'muted', weight: 700 });
         a.text(220, 310, '0.0초', { id: 'clk', size: 16, weight: 800, mono: true });
         a.caption('주문 서버가 모든 일을 직접 부르고, 끝날 때까지 기다려요');
-        await a.send('u', 'p', '주문', { dur: 450 });
+        await a.send('u', 'p', '주문', { dur: 350 });
         a.setNode('p', { sub: '기다리는 중…' });
         let t = 0.1;
         for (const [id, , , , lab, sec] of SV) {
-          await a.par(clock(a, 'clk', t, t + sec, 1010), (async () => {
-            await a.send('p', id, lab, { color: 'amber', dur: 380 });
+          await a.par(clock(a, 'clk', t, t + sec, 640), (async () => {
+            await a.send('p', id, lab, { color: 'amber', dur: 260 });
             a.hl(id);
-            await a.wait(250);
+            await a.wait(120);
             a.hl(id, false);
-            await a.send(id, 'p', 'OK', { color: 'green', dur: 380 });
+            await a.send(id, 'p', 'OK', { color: 'green', dur: 260 });
           })());
           t += sec;
         }
         a.setNode('p', { sub: '' });
-        await a.send('p', 'u', '완료', { color: 'green', dur: 450 });
+        await a.send('p', 'u', '완료', { color: 'green', dur: 350 });
         a.note('n1', 360, 40, `응답 시간 = 모든 호출의 합 (${t.toFixed(1)}초)`, { color: 'amber' });
-        await a.wait(500);
+        await a.wait(300);
         // 메일 서버 고장
         a.caption('이번엔 메일 서버가 고장 났다면?');
         a.setNode('mail', { color: 'red', sub: '고장' });
         a.badge('mail', '✕', 'red');
         a.setText('clk', '0.0초');
-        await a.send('u', 'p', '주문', { dur: 400 });
+        await a.send('u', 'p', '주문', { dur: 350 });
         a.setNode('p', { sub: '기다리는 중…' });
         const pk = a.packet('메일 발송', { at: 'p', color: 'amber' });
-        await a.par(a.move(pk, 'mail', 380), clock(a, 'clk', 0.1, 3.0, 1100));
+        await a.par(a.move(pk, 'mail', 320), clock(a, 'clk', 0.1, 3.0, 900));
         pk.set('✕ 시간 초과', 'red');
-        await a.fadeOut(pk, 300);
+        await a.fadeOut(pk, 250);
         a.setNode('p', { sub: '' });
         a.hl('p', true, 'red');
-        await a.send('p', 'u', '주문 실패', { color: 'red', dur: 450 });
+        await a.send('p', 'u', '주문 실패', { color: 'red', dur: 350 });
         a.note('n2', 360, 410, '메일 하나 때문에 주문 전체가 실패!', { color: 'red' });
-        await a.wait(600);
+        await a.wait(500);
       },
     },
     {
@@ -251,27 +251,27 @@ export default {
           m.dim = true;
           q.render(150);
           const cp = chip(a, m.label, SLOT(q.list.indexOf(m)), CY, m.color);
-          await a.move(cp, w, 450);
-          await a.fadeOut(cp, 150);
+          await a.move(cp, w, 400);
+          await a.fadeOut(cp, 120);
           a.setNode(w, { sub: `${m.label} 처리 중` });
           a.hl(w);
         }
         async function ack(m, w) {
           a.hl(w, false);
           a.setNode(w, { sub: `${m.label} 완료 ✓` });
-          await a.send(w, [QR - 4, CY], 'ACK', { color: 'green', dur: 450 });
+          await a.send(w, [QR - 4, CY], 'ACK', { color: 'green', dur: 400 });
           const { c } = q.take(m);
           q.render();
           await a.fadeOut(c, 200);
         }
         a.caption('건네준 쪽지는 흐리게 남겨 둬요 (아직 안 지움)');
         await give(m7, 'w0');
-        await a.wait(600);
+        await a.wait(350);
         await ack(m7, 'w0');
         a.caption('ACK를 받고 나서야 지워요');
-        await a.wait(300);
+        await a.wait(150);
         await give(m8, 'w1');
-        await a.wait(400);
+        await a.wait(300);
         a.hl('w1', true, 'red');
         a.setNode('w1', { color: 'red', sub: '다운!' });
         a.badge('w1', '✕', 'red');
@@ -279,15 +279,15 @@ export default {
         a.caption('ACK가 오지 않아요…');
         a.text(382, 306, '#108 ACK 기다리는 중', { id: 'tl', size: 11.5, weight: 700, color: 'amber' });
         const b = a.bar('tb', 302, 284, 160, { color: 'amber' });
-        await b.set(1, 1300);
+        await b.set(1, 1000);
         a.setText('tl', '시간 초과 → 다시 전달!');
         m8.dim = false;
         q.chips.get(m8.id).set(null, 'amber');
         m8.color = 'amber';
         q.render(150);
-        await a.wait(300);
+        await a.wait(150);
         await give(m8, 'w2');
-        await a.wait(500);
+        await a.wait(300);
         await ack(m8, 'w2');
         a.remove('tl');
         a.remove('tb');
@@ -306,8 +306,10 @@ export default {
         a.text(QL, 160, '큐 길이', { size: 12, anchor: 'start', weight: 700, cls: 'muted' });
         const gb = a.bar('qb', QL + 54, 160, 150, { color: 'violet' });
         a.text(QR, 160, '0개', { id: 'qn', size: 13, anchor: 'end', weight: 800, mono: true });
+        let peak = 0;
         const gauge = () => {
           const n = q.list.length;
+          peak = Math.max(peak, n);
           q.fire(gb.set(n / 7, 150));
           a.setText('qn', `${n}개`);
           a.get('qn').setAttribute('class', `tx mono tc-${n >= 5 ? 'red' : n >= 3 ? 'amber' : 'green'}`);
@@ -336,6 +338,9 @@ export default {
         ev.push({ t: 3000, fn: () => a.caption('주문이 멈추자 큐가 천천히 줄어요') });
         await timeline(a, 5900, ev);
         await q.done();
+        const px = QL + 54 + (150 * Math.min(1, peak / 7));
+        a.raw('line', { x1: px, y1: 150, x2: px, y2: 170, style: 'stroke: var(--red); stroke-width: 2' }, 'top');
+        a.text(px, 138, `최고 ${peak}개`, { size: 11, weight: 800, color: 'red' });
         a.note('n1', 360, 410, '몰릴 땐 큐에 쌓아 두고 → 워커는 제 속도로 비워요', { color: 'violet' });
         await a.wait(600);
       },
@@ -357,47 +362,47 @@ export default {
         q.render(0);
         a.note('n1', 330, 62, 'ACK가 유실되어 #108이 한 번 더 왔어요', { color: 'amber' });
         const { c: c8 } = q.take(m8);
-        await a.move(c8, 'w0', 450);
-        await a.fadeOut(c8, 150);
+        await a.move(c8, 'w0', 380);
+        await a.fadeOut(c8, 120);
         a.setNode('w0', { sub: '#108 확인 중' });
-        await a.send('w0', 'db', '#108?', { color: 'teal', dur: 400 });
+        await a.send('w0', 'db', '#108?', { color: 'teal', dur: 320 });
         a.hl('db');
-        await a.wait(250);
+        await a.wait(150);
         a.hl('db', false);
-        await a.send('db', 'w0', '이미 처리', { color: 'amber', dur: 400 });
+        await a.send('db', 'w0', '이미 처리', { color: 'amber', dur: 320 });
         a.setNode('w0', { sub: '건너뜀 ✓' });
-        await a.send('w0', [QR - 4, CY], 'ACK', { color: 'green', dur: 400 });
+        await a.send('w0', [QR - 4, CY], 'ACK', { color: 'green', dur: 320 });
         a.remove('n1');
         a.note('n2', 330, 62, '주문번호로 확인 → 두 번 처리하지 않아요 (멱등)', { color: 'green' });
-        await a.wait(700);
+        await a.wait(450);
         // 독 메시지 → DLQ
         a.remove('n2');
         a.note('n3', 330, 62, '#109는 내용이 잘못돼 계속 실패해요', { color: 'red' });
         a.setNode('w0', { sub: '대기' });
         const c9 = chip(a, '#109', PX + 40, CY, 'red');
-        await a.move(c9, [SLOT(0), CY], 450);
+        await a.move(c9, [SLOT(0), CY], 380);
         const m9 = q.push('#109', c9, 'red');
         for (let r = 1; r <= 3; r++) {
           m9.dim = true;
           q.render(100);
           const cp = chip(a, '#109', SLOT(0), CY, 'red');
-          await a.move(cp, 'w0', 380);
+          await a.move(cp, 'w0', 300);
           a.setNode('w0', { sub: '#109 처리 중' });
-          await a.wait(200);
+          await a.wait(120);
           a.hl('w0', true, 'red');
           a.setNode('w0', { sub: '실패 ✕' });
           cp.set('✕', 'red');
-          await a.fadeOut(cp, 200);
+          await a.fadeOut(cp, 150);
           m9.dim = false;
           q.render(100);
           a.setText('rt', `실패 ${r}/3`);
           a.hl('w0', false);
-          await a.wait(200);
+          await a.wait(100);
         }
         a.caption('3번 실패 → DLQ로 옮겨요');
         const { c } = q.take(m9);
         q.render();
-        await a.move(c, 'dlq', 600);
+        await a.move(c, 'dlq', 450);
         await a.fadeOut(c, 150);
         a.setText('rt', '');
         a.setNode('dlq', { sub: '#109 보관' });
@@ -421,7 +426,7 @@ export default {
         a.edge('p', 'topic');
         for (const [id, lab, ic, y] of SUB) {
           const nw = id === 's3';
-          a.node(id, 590, y, { label: lab, sub: nw ? '새 서비스' : '구독 중', icon: ic, color: nw ? 'pink' : 'teal', w: 150, h: 56, hidden: nw });
+          a.node(id, 590, y, { label: lab, sub: nw ? '새 서비스' : '구독 중', icon: ic, color: nw ? 'pink' : 'teal', w: 150, h: 60, hidden: nw });
           a.edge('topic', id, { id: 'e-' + id, dashed: nw, hidden: nw });
         }
         async function publish(lab, subs) {

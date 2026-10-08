@@ -246,7 +246,7 @@ export default {
         a.node('stg', 590, 250, { label: '스테이징', sub: '운영과 같은 구성', icon: '🧭', color: 'teal', w: 150, h: 76, layer: 'top' });
         line(a, 150, 250, 266, 250);
         line(a, 412, 250, 512, 250);
-        a.text(90, 284, '테스트 통과한 결과물', { size: 11, cls: 'muted', weight: 600 });
+        a.text(88, 250, '통과한 결과물', { size: 11.5, cls: 'muted', weight: 700 });
         const img = a.packet('🐳 app:d4e5f6', { at: [90, 250], color: 'teal', round: 8, h: 32, size: 12.5 });
         await a.wait(250);
         await a.move(img, [340, 250], 900);

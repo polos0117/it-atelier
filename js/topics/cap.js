@@ -13,7 +13,7 @@ function base(a, o = {}) {
   a.zone('zt', 400, 48, 290, zh, { label: '도쿄 데이터센터', color: 'violet' });
   a.node('S', SX, SY, { shape: 'db', label: '서울 서버', sub: o.s ?? '재고 1', color: 'blue', w: 150, h: 84 });
   a.node('T', TX, SY, { shape: 'db', label: '도쿄 서버', sub: o.t ?? '재고 1', color: 'violet', w: 150, h: 84 });
-  a.edge('S', 'T', { id: 'link', both: true, label: '복제', color: 'teal', ly: -14 });
+  a.edge('S', 'T', { id: 'link', both: true, label: '복제', color: 'teal', ly: -24 });
   if (o.link === 'cut') cut(a);
   if (withC) {
     a.node('cS', SX, 250, { shape: 'person', label: o.cs || '민지', sub: '서울 손님', color: 'gray', w: 118, h: 50 });
@@ -28,15 +28,15 @@ function cut(a) {
   e.path.classList.replace('ec-teal', 'ec-red');
   e.path.classList.add('dashed');
   e.lab.textContent = '연결 끊김';
-  e.lab.classList.add('tc-red');
-  return a.text(MID, SY, '✕', { id: 'cutx', size: 30, weight: 800, color: 'red', layer: 'edge' });
+  e.lab.style.fill = 'var(--red)';
+  return a.text(MID, SY, '✕', { id: 'cutx', size: 26, weight: 800, color: 'red', layer: 'edge' });
 }
 function heal(a) {
   const e = a.get('link');
   e.path.classList.replace('ec-red', 'ec-teal');
   e.path.classList.remove('dashed');
   e.lab.textContent = '연결 복구';
-  e.lab.classList.remove('tc-red');
+  e.lab.style.fill = '';
   a.remove('cutx');
 }
 /** 끊긴 길로 보낸 메시지: 가운데에서 사라진다 */
