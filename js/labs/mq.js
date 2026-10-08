@@ -1,10 +1,12 @@
 // 메시지 큐 실험실: 주문 속도·워커 수·처리 시간·워커 장애·직접 호출을 바꿔 가며 큐가 완충하는 모습을 본다
 const UX = 52, PX = 176, QL = 250, QR = 498, QY = 230, CY = 240;
 const WX = 638, WY = [62, 144, 226, 308, 390];
+const U_OUT = [UX + 44, QY], P_IN = [PX - 56, QY], P_OUT = [PX + 56, CY], P_TOP = [PX, QY - 38];
+const W_IN = (i) => [WX - 64, WY[i]]; // 점은 장치 가운데가 아니라 테두리에서 멈춘다(글자를 가리지 않게)
 const SLOT = (i) => QR - 24 - i * 40; // 0 = 맨 앞(워커 쪽)
 const MAXS = 6; // 큐 안에 보이는 칸 수
 const QCAP = 40; // 큐 최대 길이 — 넘치면 거절
-const PROC = { fast: 400, mid: 800, slow: 1600 }; // 처리 시간(ms)
+const PROC = { fast: 300, mid: 600, slow: 1400 }; // 처리 시간(ms)
 const TAKE = 350; // 큐에서 워커까지 가는 시간
 const VT = 2500; // ACK 기다리는 시간(가시성 타임아웃)
 const WAITMAX = 1500; // 직접 호출 모드: 빈 워커를 기다리는 최대 시간
@@ -42,7 +44,7 @@ export default {
     a.node('p', PX, QY, { label: '주문 서버', sub: '', icon: '🛒', color: 'amber', w: 108, h: 70 });
     a.zone('qz', QL, QY - 34, QR - QL, 68, { label: '메시지 큐', color: 'violet' });
     a.text(QR - 10, QY - 20, '', { id: 'qmore', size: 11, anchor: 'end', weight: 700, cls: 'muted' });
-    a.text((QL + QR) / 2, CY, '큐 없음 — 워커를 바로 불러요', { id: 'qoff', size: 12, weight: 700, color: 'red' });
+    a.text((QL + QR) / 2, QY + 52, '큐 없음 — 워커를 바로 불러요', { id: 'qoff', size: 12, weight: 700, color: 'red' });
     a.edge('u', 'p');
     a.edge('p', [QL - 2, QY]);
     WY.forEach((y, i) => {
@@ -104,8 +106,8 @@ export default {
     const pushWait = (ms) => { s.waits.push(ms / 1000); if (s.waits.length > 20) s.waits.shift(); };
     const failAt = async (label) => {
       s.fail++; s.failSince++;
-      const p = a.packet(label, { at: 'p', color: 'red' });
-      await a.move(p, [PX, QY - 58], 500);
+      const p = a.packet(label, { at: P_TOP, color: 'red' });
+      await a.move(p, [PX, QY - 66], 500);
       await a.fadeOut(p, 400);
     };
     const pickIdle = () => {
@@ -153,7 +155,7 @@ export default {
       const c = m.chip;
       c.tok = (c.tok || 0) + 1; // 큐 안 미끄러짐 멈춤
       c.g.style.opacity = 1;
-      await a.move(c, direct ? [[QR + 2, QY], 'w' + i] : 'w' + i, direct ? 520 : TAKE);
+      await a.move(c, direct ? [[QR + 2, QY], W_IN(i)] : W_IN(i), direct ? 520 : TAKE);
       a.remove(c);
       setW(i, `${m.label} 처리 중`, 'amber');
       const ms = PROC[s.proc];
@@ -165,9 +167,8 @@ export default {
       setW(i, `${m.label} 완료 ✓`, 'green');
       s.done++; s.doneSince++;
       if (m.redo) s.redoneSince++;
-      if (i >= s.workers) paintW(i);
-      if (direct) await a.send('w' + i, 'p', '', { color: 'green', dur: 420, w: 12, via: [[QR + 2, QY]] });
-      else await a.send('w' + i, [QR + 2, CY], '', { color: 'green', dur: 300, w: 12 }); // ACK
+      if (direct) await a.send(W_IN(i), P_OUT, '', { color: 'green', dur: 420, w: 12, h: 12, via: [[QR + 2, QY]] });
+      else await a.send(W_IN(i), [QR + 2, CY], '', { color: 'green', dur: 300, w: 12, h: 12 }); // ACK
     };
 
     /** 직접 호출: 빈 워커가 없으면 주문 서버가 붙잡고 기다리다 시간 초과 */
@@ -183,14 +184,14 @@ export default {
       }
       pushWait(a.now() - t0);
       W[i].busy = true;
-      await work(i, { label, chip: chip(label, 'p', 'blue') }, true);
+      await work(i, { label, chip: chip(label, P_OUT, 'blue') }, true);
     };
 
     s.order = async () => {
       const label = '#' + (++seq % 1000);
-      await a.send('u', 'p', '', { color: 'blue', dur: 300, w: 14 });
+      await a.send(U_OUT, P_IN, '', { color: 'blue', dur: 300, w: 16, h: 16 });
       if (s.direct) return direct(label);
-      const c = chip(label, 'p');
+      const c = chip(label, P_OUT);
       await a.move(c, [QL + 18, CY], 300);
       if (q.length >= QCAP) { a.remove(c); return failAt('큐 가득'); }
       c.tx = null;
@@ -233,7 +234,7 @@ export default {
   },
   tasks: [
     { t: '주문 폭주를 보내 큐가 10개 이상 쌓였다가 다시 0개로 줄어드는 것 보기', check: (s) => s.piled && s.drained },
-    { t: '초당 주문을 4개 이상으로 올린 뒤 워커를 늘려, 큐 길이를 15초 동안 2개 이하로 유지하기', check: (s) => !s.direct && s.rate >= 4 && s.doneSince >= 20 && s.now() - s.calm >= 15000 },
+    { t: '초당 주문을 4개 이상으로 올린 뒤 워커를 늘려, 큐 길이를 10초 동안 2개 이하로 유지하기', check: (s) => !s.direct && s.rate >= 4 && s.doneSince >= 20 && s.now() - s.calm >= 10000 },
     { t: '워커 1 장애를 켜고, ACK를 못 받은 주문이 재전달돼 다른 워커에서 처리되는 것 보기 (실패 0)', check: (s) => s.down && !s.direct && s.redoneSince >= 1 && s.failSince === 0 },
     { t: '큐 없이 직접 호출로 바꾸고 주문 폭주를 보내 보기 — 실패가 생기나요?', check: (s) => s.direct && s.failSince >= 3 },
   ],

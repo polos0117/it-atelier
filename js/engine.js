@@ -453,8 +453,17 @@ export class Player {
       Promise.resolve().then(fn).catch((err) => { if (!(err instanceof Cancel)) console.error('[lab]', err); });
     };
     /** ms(숫자 또는 함수)마다 fn 실행 — 배속·일시정지를 따른다 */
+    // 프레임이 느리거나 배속이 높아도 밀린 횟수만큼 따라잡는다(한 번에 최대 50회)
     const every = (ms, fn) => spawn(async () => {
-      for (;;) { await wait(Math.max(16, typeof ms === 'function' ? ms() : ms)); check(); spawn(fn); }
+      const gap = () => Math.max(5, typeof ms === 'function' ? ms() : ms);
+      let next = P.clock + gap();
+      for (;;) {
+        await wait(Math.max(16, next - P.clock));
+        check();
+        let n = 0;
+        while (P.clock >= next && n++ < 50) { spawn(fn); next += gap(); }
+        if (P.clock >= next) next = P.clock + gap();
+      }
     });
     const now = () => P.clock;
     /** 원시 SVG 요소 (특수한 그림용) */

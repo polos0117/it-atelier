@@ -1,10 +1,20 @@
 // 레이트 리미터 실험실: 요청 속도·버킷 크기·충전 속도·알고리즘을 바꾸며 429가 언제 생기는지 본다
 const SLOT = Array.from({ length: 10 }, (_, i) => [310 + (i % 5) * 25, i < 5 ? 314 : 288]); // 버킷 안 토큰 자리
-const GATE = [268, 150]; // 리미터 앞에서 판정하는 지점
+const GATE = [268, 150]; // 리미터 앞에서 판정하는 지점(노드 가장자리 바깥)
+const CLI_OUT = [142, 150], LIM_OUT = [444, 150], SRV_IN = [570, 150];
 const TL = { x0: 40, x1: 680, y: 404, span: 10000 }; // 아래 타임라인: 최근 10초
 const MAXEV = 140;
 const winMs = (s) => (s.cap / s.refill) * 1000; // 고정 윈도 칸 길이 = 같은 평균 속도가 되도록 한도 ÷ 충전 속도
 const need = (s) => Math.max(s.cap + 2, Math.ceil(s.cap * 1.5)); // 경계 버스트 과제 기준
+/** 초당 r번 fn 실행 — 화면 프레임이 느려도 평균 속도가 맞도록 밀린 만큼 한꺼번에 실행 */
+const pace = (a, rate, fn) => {
+  let due = a.now();
+  a.every(40, () => {
+    const r = rate(), now = a.now();
+    if (r <= 0 || now - due > 1500) { due = now; if (r <= 0) return; }
+    while (due <= now) { due += 1000 / r; fn(); }
+  });
+};
 const sec = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 
 export default {
@@ -107,8 +117,11 @@ export default {
       if (b) { b.n++; ok ? b.ok++ : b.no++; }
       if (ok) {
         s.ok++; s.okSince++;
-        s.passT.push(t); if (s.passT.length > 60) s.passT.shift();
-        if (s.algo === 'fw') { const from = t - winMs(s); s.peakSince = Math.max(s.peakSince, s.passT.filter((x) => x > from).length); }
+        s.passT.push({ t, b: !!b }); if (s.passT.length > 60) s.passT.shift();
+        if (s.algo === 'fw') { // 칸 길이만큼의 구간 안에 통과한 수(버스트가 섞인 구간만 센다)
+          const from = t - winMs(s), span = s.passT.filter((x) => x.t > from);
+          if (span.some((x) => x.b)) s.peakSince = Math.max(s.peakSince, span.length);
+        }
       } else { s.no++; s.noSince++; }
     };
 
@@ -116,14 +129,15 @@ export default {
       if (s.fly >= 70) { if (b) b.n++; return; }
       s.fly++;
       try {
-        const p = a.packet('', { at: 'cli', color: b ? 'violet' : 'blue', w: 16, h: 16 });
-        await a.move(p, GATE, 520);
+        const p = a.packet('', { at: CLI_OUT, color: b ? 'violet' : 'blue', w: 16, h: 16 });
+        await a.move(p, GATE, 440);
         const ok = take();
         record(ok, b);
         s.paint();
         if (ok) {
           p.set(null, 'green');
-          await a.move(p, 'srv', 560);
+          await a.move(p, LIM_OUT, 0); // 리미터 안을 건너뛰어 글자를 가리지 않게
+          await a.move(p, SRV_IN, 420);
           a.remove(p);
           s.srvT.push(a.now()); if (s.srvT.length > 80) s.srvT.shift();
           s.paint();
@@ -143,16 +157,16 @@ export default {
     };
 
     // 토큰 충전 — 토큰 버킷일 때만
-    a.every(() => 1000 / s.refill, async () => {
+    pace(a, () => (s.algo === 'tb' ? s.refill : 0), () => a.spawn(async () => {
       if (s.algo !== 'tb') return;
       const p = a.packet('', { at: [224, 282], w: 16, h: 16, color: 'amber' });
       await a.move(p, [300, 262], 380);
       if (s.algo === 'tb' && s.tokens < s.cap) { s.tokens++; a.remove(p); s.paint(); return; }
       p.set(null, 'gray'); // 가득 차서 넘침
       await a.par(a.move(p, [268, 232], 300), a.fadeOut(p, 300));
-    });
+    }));
     // 계속 들어오는 요청
-    a.every(() => (s.rate > 0 ? 1000 / s.rate : 200), () => { if (s.rate > 0) return s.fire(null); });
+    pace(a, () => s.rate, () => a.spawn(() => s.fire(null)));
     // 화면 갱신(칸 타이머·타임라인·부하)
     a.every(100, () => s.paint());
   },
@@ -168,7 +182,7 @@ export default {
     return rows;
   },
   tasks: [
-    { t: "요청을 줄여 버킷을 가득 채운 뒤 '버스트 10개' — 버킷 크기만큼만 통과하고 나머지는 429가 되나요?", check: (s) => { const b = s.lastBurst; return !!b && b.algo === 'tb' && b.full && b.n >= 10 && b.no >= 1; } },
+    { t: "요청을 줄여 버킷을 가득 채운 뒤 '버스트 10개' — 버킷 크기 정도만 통과하고 나머지는 429가 되나요?", check: (s) => { const b = s.lastBurst; return !!b && b.algo === 'tb' && b.full && b.n >= 10 && b.no >= 1; } },
     { t: '초당 요청을 충전 속도 이하로 맞춰, 429 없이 20개 통과시키기', check: (s) => s.algo === 'tb' && s.rate >= 1 && s.rate <= s.refill && s.okSince >= 20 && s.noSince === 0 },
     { t: "버킷 크기를 1로 줄이고 '버스트 10개' — 버스트가 거의 다 막히나요?", check: (s) => { const b = s.lastBurst; return !!b && b.algo === 'tb' && b.cap === 1 && b.n >= 10 && b.no >= 7; } },
     { t: '고정 윈도에서 칸 경계 직전·직후에 버스트를 보내, 한 칸 길이 안에 한도의 1.5배 이상 통과시키기', check: (s) => s.algo === 'fw' && s.cap >= 3 && s.peakSince >= need(s) },
