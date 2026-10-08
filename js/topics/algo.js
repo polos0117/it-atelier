@@ -323,7 +323,7 @@ export default {
           if (b.v === TARGET) { setS(b, 'found'); ptr.set('찾음', 'green'); break; }
           setS(b, 'seen');
         }
-        a.note('n6', 330, 80, '7번 확인해서 찾음\n100만 개면 최악 100만 번 → O(n)', { color: 'amber' });
+        a.note('n6', 400, 80, '7번 확인해서 찾음\n100만 개면 최악 100만 번 → O(n)', { color: 'amber' });
         await a.wait(800);
       },
     },
