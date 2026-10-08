@@ -227,6 +227,14 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 56px; }
 .tlink { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; text-decoration: none; color: var(--ink); background: color-mix(in srgb, var(--lc) 18%, var(--panel2)); border: 1px solid color-mix(in srgb, var(--lc) 45%, transparent); white-space: nowrap; }
 .tlink:hover { border-color: var(--lc); }
 
+/* 실험실 목록 */
+.labs { margin: 0 0 34px; }
+.lab-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.lab-list a { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); border-left: 4px solid var(--lc); background: var(--panel); text-decoration: none; transition: transform .15s, border-color .15s; }
+.lab-list a:hover { transform: translateY(-2px); border-color: var(--lc); }
+.lab-list b { font-size: 15px; }
+.lab-list span { font-size: 12.5px; color: var(--muted); }
+
 /* 보기 방식 탭 */
 .modetabs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .modetabs a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 9px; text-decoration: none; font-size: 14.5px; font-weight: 700; color: var(--muted); }
@@ -234,6 +242,14 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 56px; }
 .modetabs a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
 
 /* 실험실 */
+.learn.lab { grid-template-areas: "stage side" "intro side"; grid-template-rows: auto 1fr; }
+.learn.lab > .stagebox { grid-area: stage; }
+.learn.lab > .labside { grid-area: side; }
+.learn.lab > .labintro { grid-area: intro; margin-top: 0; align-self: start; }
+@media (max-width: 980px) {
+  .learn.lab { grid-template-areas: "stage" "side" "intro"; }
+  .labside .stats { grid-template-columns: 1fr 1fr; }
+}
 .labctl { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--panel); }
 .labctl .lc { display: inline-flex; align-items: center; gap: 8px; }
 .labctl .ll { font-size: 13px; color: var(--muted); white-space: nowrap; }

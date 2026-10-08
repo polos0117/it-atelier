@@ -96,6 +96,13 @@ function renderHome() {
         </article>`;
       }).join('')}</div>
     </section>
+    <section class="labs" aria-labelledby="lh">
+      <div class="sec-h"><h2 id="lh">🧪 직접 실험실</h2><p>서버를 끄고, 트래픽을 올리고, 패킷을 잃어버리게 해 보세요. 도전 과제를 깨면 체크돼요.</p></div>
+      <div class="lab-list">${LAB_IDS.map((id) => TOPICS.find((x) => x.id === id)).filter(Boolean).map((x) => {
+        const k = (store.get('labtasks', {})[x.id] || []).length;
+        return `<a href="#/t/${x.id}/lab" style="--lc:${lc(x.level)}"><b>${esc(x.title.split(' — ')[0])}</b><span>${k ? `과제 ${k}개 달성` : '실험해 보기 →'}</span></a>`;
+      }).join('')}</div>
+    </section>
     <div class="sec-h"><h2>모든 주제</h2></div>
     <div class="filters" role="group" aria-label="난이도 거르기">
       <button class="chip" data-f="0" aria-pressed="${filter === 0}">전체</button>
@@ -367,7 +374,6 @@ async function renderLab(t) {
   };
   app.querySelector('.empty').outerHTML = `
     <div class="learn lab">
-      <div>
         <div class="stagebox">
           <div class="stagewrap">
             <svg id="stage" role="img" aria-label="${esc(lab.title)}"></svg>
@@ -382,13 +388,12 @@ async function renderLab(t) {
             <div class="sp"><span class="seg" role="group" aria-label="재생 속도">${speeds.map((x) => `<button type="button" data-sp="${x}" aria-pressed="${x === speed}">${x}×</button>`).join('')}</span></div>
           </div>
         </div>
-        <section class="explain"><div class="h"><b>${esc(lab.title)}</b></div><p>${esc(lab.intro)}</p></section>
-      </div>
       <aside class="rail labside" aria-label="실험 결과">
         <h3>실시간 숫자</h3><div class="stats" id="stats"></div>
         <h3>도전 과제</h3><ol class="tasks" id="tasks">${lab.tasks.map((x, i) => `<li data-i="${i}" class="${doneTasks.has(i) ? 'ok' : ''}"><span class="i">${doneTasks.has(i) ? '✓' : i + 1}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>
         <p class="lhint">스위치·슬라이더를 바꾸면 바로 반영돼요. 과제를 달성하면 자동으로 체크됩니다.</p>
       </aside>
+      <section class="explain labintro"><div class="h"><b>${esc(lab.title)}</b></div><p>${esc(lab.intro)}</p></section>
     </div>
     <div class="toast" id="toast" role="status"></div>`;
 

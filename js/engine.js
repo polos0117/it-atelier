@@ -354,7 +354,7 @@ export class Player {
     }
     /** from 노드에서 to 노드로 패킷을 보낸다. keep=false면 도착 후 사라진다. */
     async function send(from, to, label, o = {}) {
-      const p = packet(label, { color: o.color, at: o.fromAt || from, w: o.w });
+      const p = packet(label, { color: o.color, at: o.fromAt || from, w: o.w, h: o.h });
       if (o.dy) { p.y += o.dy; p.g.setAttribute('transform', `translate(${p.x} ${p.y})`); }
       await move(p, o.via ? [...o.via, to] : to, o.dur || 900, { dy: o.dy });
       if (o.keep) return p;

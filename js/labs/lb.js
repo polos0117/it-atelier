@@ -1,6 +1,9 @@
 // 로드밸런서 실험실: 분배 방식·헬스 체크·장애·느린 서버·트래픽을 직접 바꿔 본다
 const SY = [100, 220, 340];
 const CAP = 8; // 서버 한 대가 동시에 받을 수 있는 요청 수
+// 점은 노드 가운데가 아니라 테두리에서 멈춘다 — 글자를 가리지 않게
+const LB_IN = [232, 220], LB_OUT = [368, 220], USERS = [137, 220];
+const SRV_IN = (i) => [522, SY[i]];
 const share = (s) => { const n = s.cnt[0] + s.cnt[1] + s.cnt[2]; return n ? s.cnt.map((c) => c / n) : [0, 0, 0]; };
 
 export default {
@@ -60,10 +63,11 @@ export default {
 
     s.fire = async () => {
       const t0 = a.now();
-      const p = await a.send('users', 'lb', '', { color: 'blue', dur: 420, keep: true, w: 16 });
+      const p = await a.send(USERS, LB_IN, '', { color: 'blue', dur: 420, keep: true, w: 16, h: 16 });
       const i = pick();
       if (i < 0) { p.set('503', 'red'); s.fail++; s.failSince++; await a.fadeOut(p, 400); return; }
-      await a.move(p, 's' + i, 420);
+      await a.move(p, LB_OUT, 0); // 장치 안을 지나가며 글자를 가리지 않게 건너뛴다
+      await a.move(p, SRV_IN(i), 420);
       if (down(i)) { // 꺼진 서버로 보냄 → 시간 초과
         p.set('✕ 시간 초과', 'red');
         s.fail++; s.failSince++;
@@ -81,7 +85,10 @@ export default {
       await a.wait(s.slow2 && i === 2 ? 4200 : 1200);
       active[i]--; s.paint();
       if (down(i)) { s.fail++; s.failSince++; return; } // 처리 중에 꺼짐
-      await a.send('s' + i, 'users', '✓', { color: 'green', dur: 700, w: 30, via: ['lb'] });
+      const r = await a.send(SRV_IN(i), LB_OUT, '', { color: 'green', dur: 380, w: 14, h: 14, keep: true });
+      await a.move(r, LB_IN, 0);
+      await a.move(r, USERS, 320);
+      await a.fadeOut(r, 150);
       s.ok++; s.okSince++;
       s.lat.push((a.now() - t0) / 1000);
       if (s.lat.length > 20) s.lat.shift();
@@ -92,7 +99,7 @@ export default {
     // 헬스 체크 — 1초마다 묻고, 결과로 풀을 고친다
     a.every(1000, async () => {
       if (!s.hc) { if (known.some(Boolean)) { known.fill(false); s.paint(); } return; }
-      await a.par(...[0, 1, 2].map((i) => a.send('lb', 's' + i, '', { color: 'teal', dur: 300, w: 12 })));
+      await a.par(...[0, 1, 2].map((i) => a.send(LB_OUT, SRV_IN(i), '', { color: 'teal', dur: 300, w: 10, h: 10 })));
       [0, 1, 2].forEach((i) => (known[i] = down(i)));
       s.paint();
     });
@@ -103,7 +110,7 @@ export default {
       ['처리 완료', s.ok, 'green'],
       ['실패', s.fail, s.fail ? 'red' : ''],
       ['평균 응답', avg ? avg.toFixed(1) + '초' : '-', avg > 4 ? 'red' : ''],
-      ['서버별 몫', share(s).map((x) => Math.round(x * 100) + '%').join(' · '), ''],
+      ['서버별 몫', share(s).map((x) => Math.round(x * 100)).join(' · ') + '%', ''],
     ];
   },
   tasks: [
