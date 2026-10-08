@@ -58,6 +58,11 @@ export default {
     ['충돌', '두 갈래에서 같은 파일의 같은 부분을 다르게 고쳐 Git이 자동으로 합칠 수 없는 상태'],
     ['origin', '원격 저장소의 기본 이름. 보통 GitHub 같은 서버에 있다'],
   ],
+  quiz: [
+    { q: 'git add가 하는 일은?', c: ['변경 내용을 바로 GitHub에 올린다', '이번 커밋에 넣을 변경을 스테이징(장바구니)에 담는다', '새 브랜치를 만든다', '마지막 커밋을 되돌린다'], a: 1, why: 'add는 스테이징에 담기만 합니다. 기록은 commit, 원격 업로드는 push가 합니다.', step: 0 },
+    { q: 'git switch -c feature로 새 브랜치를 만들면 실제로 어떤 일이 일어날까요?', c: ['프로젝트 폴더 전체가 새 폴더로 복사된다', 'GitHub에 새 저장소가 함께 만들어진다', '지금까지의 커밋이 새 브랜치로 옮겨져 main은 비게 된다', '현재 커밋을 가리키는 새 이름표가 생기고 HEAD가 그쪽을 가리킨다'], a: 3, why: '브랜치는 커밋 하나를 가리키는 포인터(ref)일 뿐이라 파일 복사 없이 즉시 만들어집니다.', step: 2 },
+    { q: 'git merge feature가 3-way merge를 할 때 비교하는 세 커밋은?', c: ['main 최신, feature 최신, 둘의 공통 조상', 'main 최신, feature 최신, origin/main', '첫 커밋, main 최신, feature 최신', 'HEAD, HEAD의 부모, feature 최신'], a: 0, why: '공통 조상(9c2e)을 기준으로 양쪽 변경을 비교해, 한쪽만 바꾼 곳은 자동 반영하고 같은 부분을 다르게 바꾼 곳은 충돌로 멈춥니다.', step: 4 },
+  ],
   setup(a) {
     a.text(360, 18, '', { id: 'cmd', size: 13.5, weight: 700, mono: true, layer: 'edge', cls: 'tc-amber' });
     a.zone('z-work', 24, 336, 216, 90, { label: '① 작업 폴더', color: 'gray' });

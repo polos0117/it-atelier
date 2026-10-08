@@ -37,6 +37,11 @@ export default {
     ['샤드 키', '어느 샤드로 보낼지 정하는 기준 값. 예: user_id'],
     ['핫스팟', '요청이 특정 샤드 하나에만 몰리는 현상'],
   ],
+  quiz: [
+    { q: 'Primary–Replica 복제 구조에서 "새 글 쓰기"를 받는 곳은?', c: ['아무 Replica나', 'Primary(원본) 한 곳', '모든 DB에 동시에', '가장 한가한 Replica'], a: 1, why: '쓰기는 Primary만 받고, Replica들은 복제 로그를 받아 따라 적용합니다. Replica는 읽기를 나눠 맡습니다.', step: 2 },
+    { q: '글을 올리자마자 목록을 새로 고쳤더니 내 글이 보이지 않습니다. 가장 가능성 높은 원인은?', c: ['Primary가 쓰기를 거절했다', '샤드 하나에 요청이 몰리는 핫스팟이 생겼다', '아직 변경을 따라오지 못한 Replica에서 읽었다(복제 지연)', 'Replica가 Primary로 승격되었다'], a: 2, why: '비동기 복제라 Replica는 조금 늦게 따라옵니다. 쓴 직후 읽기를 Primary로 보내는 식으로 read-your-writes를 보장합니다.', step: 3 },
+    { q: '비동기 복제에서 Primary 장애로 페일오버할 때 생길 수 있는 문제는?', c: ['승격된 Replica는 이후에도 읽기만 받을 수 있다', '옛 Primary가 돌아오면 새 Primary와 데이터가 자동으로 합쳐진다', '모든 Replica가 동시에 Primary로 승격된다', 'Primary가 커밋했지만 아직 전달되지 않은 마지막 쓰기가 사라질 수 있다'], a: 3, why: '비동기 복제는 Replica 적용을 기다리지 않고 커밋하므로 마지막 쓰기가 유실될 수 있습니다. 옛 Primary가 쓰기를 받는 split-brain은 펜싱으로 막아야 합니다.', step: 4 },
+  ],
   setup(a) {
     a.node('app', 90, 220, { label: '앱 서버', icon: '🖥️', color: 'blue', w: 108, h: 70 });
     a.node('pri', 330, 220, { shape: 'db', label: 'Primary', sub: '글 10개', icon: '✍️', color: 'amber', w: 132, h: 84 });

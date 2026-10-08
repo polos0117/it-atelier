@@ -2,9 +2,9 @@
 // 배열 순서 = 추천 학습 순서. 한 파일이 깨져도 나머지는 뜨도록 하나씩 불러온다.
 export const IDS = [
   'computer', 'web', 'dns', 'packet',
-  'http', 'tcp', 'https', 'session',
+  'http', 'tcp', 'https', 'session', 'algo',
   'httpver', 'cache', 'lb', 'dbindex', 'git',
-  'replication', 'hashring', 'ratelimit', 'k8s', 'raft',
+  'replication', 'hashring', 'ratelimit', 'k8s', 'raft', 'llm',
 ];
 
 export async function loadTopics() {

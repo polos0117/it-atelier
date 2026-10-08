@@ -38,6 +38,11 @@ export default {
     ['멀티플렉싱', '한 연결 안에 여러 요청/응답을 잘게 나눠 섞어 보내는 것'],
     ['QUIC', 'UDP 위에 신뢰성·암호화(TLS 1.3)·스트림을 직접 구현한 전송 프로토콜'],
   ],
+  quiz: [
+    { q: 'HTTP/1.1이 HTTP/1.0보다 나아진 점은 무엇일까요?', c: ['파일을 조각내 여러 파일을 한 통로에 섞어 보낸다', 'UDP를 써서 인사 없이 바로 보낸다', '조각 하나가 사라져도 다른 파일은 계속 도착한다', '파일마다 새로 연결하지 않고 한 번 맺은 연결을 계속 쓴다'], a: 3, why: 'HTTP/1.1은 Keep-Alive로 연결을 재사용합니다. 섞어 보내기는 HTTP/2, UDP와 스트림 독립은 HTTP/3의 특징입니다.', step: 1 },
+    { q: 'HTTP/2 연결에서 TCP 패킷 하나가 손실되면 어떻게 될까요?', c: ['손실된 패킷이 속한 스트림만 멈추고 나머지는 계속 간다', '연결을 끊고 HTTP/1.1로 다시 접속한다', '재전송될 때까지 그 연결의 모든 스트림이 기다린다', '손실된 조각은 버리고 나머지만 화면에 그린다'], a: 2, why: 'TCP는 바이트 순서를 보장해야 해서 빈 곳이 채워질 때까지 뒤 데이터를 넘기지 않습니다(TCP 수준 HOL 블로킹). 스트림별로 독립인 건 HTTP/3(QUIC)입니다.', step: 4 },
+    { q: 'Wi-Fi에서 LTE로 바뀌어 IP가 달라져도 HTTP/3 연결이 유지될 수 있는 이유는?', c: ['QUIC이 IP·포트가 아니라 Connection ID로 연결을 식별해서', 'TCP Keep-Alive가 새 IP로 자동 재연결해서', 'DNS가 바뀐 IP를 서버에 알려 줘서', '서버 푸시로 새 IP에 연결을 다시 열어 줘서'], a: 0, why: 'TCP 연결은 IP·포트 4튜플로 식별되어 IP가 바뀌면 끊기지만, QUIC은 Connection ID로 식별해 연결을 옮길 수 있습니다.', step: 5 },
+  ],
   setup(a) {
     a.node('cli', CX, 220, { label: '브라우저', icon: '💻', color: 'blue', h: 300, w: 104 });
     a.node('srv', SX, 220, { label: '서버', icon: '🖥️', color: 'green', h: 300, w: 104 });
@@ -48,7 +53,7 @@ export default {
     {
       t: 'HTTP/1.0 — 요청마다 새 연결',
       easy: '파일 하나를 받을 때마다 "안녕하세요(연결) → 주세요 → 받았어요 → 안녕히(끊기)"를 반복합니다. 파일이 3개면 인사도 3번 합니다.',
-      deep: '매 요청마다 TCP 3-way handshake(1 RTT)가 필요하고, 연결 직후에는 TCP 혼잡 제어의 slow start 때문에 전송 속도도 느립니다. HTML + CSS + JS 3개면 최소 6 RTT.',
+      deep: '매 요청마다 TCP 3-way handshake(1 RTT)가 필요하고, 연결 직후에는 TCP 혼잡 제어의 slow start 때문에 전송 속도도 느립니다. HTML + CSS + JS를 차례로 받으면 6 RTT(병렬 연결을 써도 HTML 뒤에 연결을 또 맺어야 해서 약 4 RTT).',
       async run(a) {
         a.clear('pkt', 'zone', 'top');
         a.setText('title', 'HTTP/1.0');
