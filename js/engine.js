@@ -128,6 +128,18 @@ export class Player {
     else this.goto(0);
   }
   prev() { this.goto(this.step - 1); }
+
+  /** 실험 모드: 단계 없이 계속 돌아가는 무대. 반환한 도구(a)로 lab.setup이 흐름을 띄운다. */
+  lab() {
+    const my = ++this.token;
+    clearTimeout(this.autoTimer);
+    this.tweens.clear();
+    this.auto = false;
+    this.paused = false;
+    this.step = -1;
+    this.build();
+    return this.api(my, false);
+  }
   replay() { this.goto(this.step); }
 
   /** 첫 화면(아직 0단계 애니메이션 전)에서 재생을 누르면 0단계를 바로 움직인다. */
@@ -312,7 +324,11 @@ export class Player {
       L[o.layer || 'pkt'].append(g);
       const p = { g, x: at.x, y: at.y, t, w, h, color: o.color || 'blue' };
       p.set = (lbl, c) => {
-        if (lbl != null) t.textContent = lbl;
+        if (lbl != null) {
+          t.textContent = lbl;
+          const need = String(lbl).length ? Math.max(30, String(lbl).length * (/[가-힣]/.test(lbl) ? 13 : 8) + 18) : 0;
+          if (need > p.w) { p.w = need; const r = g.querySelector('rect'); r.setAttribute('width', need); r.setAttribute('x', -need / 2); r.setAttribute('rx', h / 2); }
+        }
         if (c) { g.classList.replace('c-' + p.color, 'c-' + c); p.color = c; }
       };
       if (o.hidden) g.style.opacity = 0;
@@ -432,12 +448,22 @@ export class Player {
       for (const [k, v] of P.nodes) if (!v.g.isConnected) P.nodes.delete(k);
     }
     const caption = (s) => { if (!fast) P.onCaption(s); };
+    /** 기다리지 않는 흐름을 띄운다(실험 모드). 무대가 바뀌어 취소되면 조용히 끝난다. */
+    const spawn = (fn) => {
+      Promise.resolve().then(fn).catch((err) => { if (!(err instanceof Cancel)) console.error('[lab]', err); });
+    };
+    /** ms(숫자 또는 함수)마다 fn 실행 — 배속·일시정지를 따른다 */
+    const every = (ms, fn) => spawn(async () => {
+      for (;;) { await wait(Math.max(16, typeof ms === 'function' ? ms() : ms)); check(); spawn(fn); }
+    });
+    const now = () => P.clock;
     /** 원시 SVG 요소 (특수한 그림용) */
     const raw = (tag, attrs, layer = 'node') => { const e = el(tag, attrs); (typeof layer === 'string' ? L[layer] : layer).append(e); return e; };
 
     return {
       W, H, fast, tween, wait, node, setNode, moveNode, text, edge, zone, packet, move, send,
       show, hide, fade, fadeOut, remove, clear, hl, flash, badge, note, bar, caption, raw, get, pt,
+      spawn, every, now,
       par: (...ps) => Promise.all(ps),
       setText: (id, s) => { const t = get(id); t.textContent = s; },
     };

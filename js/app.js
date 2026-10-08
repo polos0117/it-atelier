@@ -1,5 +1,6 @@
 import { Player } from './engine.js';
 import { loadTopics, LEVELS, FACTORY, COURSES } from './topics/index.js';
+import { LAB_IDS, loadLab } from './labs/index.js';
 
 const app = document.getElementById('app');
 const store = {
@@ -46,11 +47,12 @@ function cleanup() {
 }
 function route() {
   cleanup();
-  const m = location.hash.match(/^#\/t\/([\w-]+)(?:\/(\d+))?/);
+  const m = location.hash.match(/^#\/t\/([\w-]+)(?:\/(\d+|lab))?/);
   const t = m && TOPICS.find((x) => x.id === m[1]);
   document.querySelectorAll('[data-nav]').forEach((a) => a.removeAttribute('aria-current'));
   const nav = (k) => document.querySelector(`[data-nav="${k}"]`)?.setAttribute('aria-current', 'page');
-  if (t) renderTopic(t, m[2] ? +m[2] : 0);
+  if (t && m[2] === 'lab' && LAB_IDS.includes(t.id)) renderLab(t);
+  else if (t) renderTopic(t, m[2] ? +m[2] : 0);
   else if (location.hash.startsWith('#/terms')) { renderTerms(); nav('terms'); }
   else { renderHome(); nav('home'); }
 }
@@ -124,7 +126,7 @@ function renderHome() {
         ${items.map((t) => `<a class="card" href="#/t/${t.id}">
           <div class="meta"><span class="n">${String(TOPICS.indexOf(t) + 1).padStart(2, '0')}</span><span>${esc(t.cat)}</span></div>
           <h3>${esc(t.title)}</h3><p>${esc(t.sub)}</p>
-          <div class="foot"><span>${t.steps.length}단계${t.factory ? ' · 3D 있음' : ''}</span><span>${quizBest[t.id] != null && t.quiz?.length ? `<span class="qs">퀴즈 ${quizBest[t.id]}/${t.quiz.length}</span>` : ''}${done.has(t.id) ? '<span class="done">✓ 완료</span>' : ''}</span></div>
+          <div class="foot"><span>${t.steps.length}단계${LAB_IDS.includes(t.id) ? ' · 🧪 실험' : ''}${t.factory ? ' · 3D' : ''}</span><span>${quizBest[t.id] != null && t.quiz?.length ? `<span class="qs">퀴즈 ${quizBest[t.id]}/${t.quiz.length}</span>` : ''}${done.has(t.id) ? '<span class="done">✓ 완료</span>' : ''}</span></div>
         </a>`).join('')}</div></section>`;
     }
     lists.innerHTML = html || '<p class="empty">찾는 주제가 없어요. 다른 단어로 검색해 보세요.</p>';
@@ -171,6 +173,7 @@ function renderTopic(t, startStep = 0) {
     ${courseBar(t)}
     <div class="crumb" style="--lc:${lc(t.level)}"><a href="#/">주제</a><span>›</span><span class="pill">${lv.name}</span><span>${esc(t.cat)}</span></div>
     <div class="t-head"><h1>${esc(t.title)}</h1><p>${esc(t.sub)}</p></div>
+    ${modeTabs(t, 'steps')}
     <div class="learn">
       <div>
         <div class="stagebox">
@@ -331,6 +334,139 @@ function renderTopic(t, startStep = 0) {
   };
   document.addEventListener('keydown', onKey);
   offKeys = () => { document.removeEventListener('keydown', onKey); document.body.classList.remove('noscroll'); };
+}
+
+/* ---------- 직접 실험 ---------- */
+function modeTabs(t, cur) {
+  if (!LAB_IDS.includes(t.id)) return '';
+  return `<nav class="modetabs" aria-label="보기 방식">
+    <a href="#/t/${t.id}" ${cur === 'steps' ? 'aria-current="page"' : ''}>▶ 단계별 보기</a>
+    <a href="#/t/${t.id}/lab" ${cur === 'lab' ? 'aria-current="page"' : ''}>🧪 직접 실험</a></nav>`;
+}
+
+async function renderLab(t) {
+  const lv = LEVELS[t.level];
+  document.title = `직접 실험: ${t.title} — 움직이는 IT`;
+  app.innerHTML = `
+    <div class="crumb" style="--lc:${lc(t.level)}"><a href="#/">주제</a><span>›</span><span class="pill">${lv.name}</span><span>${esc(t.cat)}</span></div>
+    <div class="t-head"><h1>${esc(t.title)}</h1><p>${esc(t.sub)}</p></div>
+    ${modeTabs(t, 'lab')}
+    <p class="empty">실험실 준비 중…</p>`;
+  window.scrollTo(0, 0);
+  let lab;
+  try { lab = await loadLab(t.id); } catch (err) { console.error('[lab]', err); app.querySelector('.empty').textContent = '실험실을 불러오지 못했어요.'; return; }
+  if (!location.hash.startsWith(`#/t/${t.id}/lab`)) return; // 그새 다른 화면으로 감
+  const doneTasks = new Set(store.get('labtasks', {})[t.id] || []);
+  const speeds = [0.5, 1, 1.5, 2];
+  let speed = store.get('speed', 1);
+  const ctl = (c, i) => {
+    if (c.type === 'radio') return `<div class="lc"><span class="ll">${esc(c.label)}</span><span class="seg" role="group" aria-label="${esc(c.label)}">${c.options.map(([v, l]) => `<button type="button" data-c="${i}" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</span></div>`;
+    if (c.type === 'toggle') return `<button type="button" class="tgl" data-c="${i}" aria-pressed="false"><i></i>${esc(c.label)}</button>`;
+    if (c.type === 'range') return `<label class="lc rng"><span class="ll">${esc(c.label)} <b data-val="${i}"></b></span><input type="range" data-c="${i}" min="${c.min}" max="${c.max}" step="${c.step || 1}"></label>`;
+    return `<button type="button" class="btn act" data-c="${i}">${esc(c.label)}</button>`;
+  };
+  app.querySelector('.empty').outerHTML = `
+    <div class="learn lab">
+      <div>
+        <div class="stagebox">
+          <div class="stagewrap">
+            <svg id="stage" role="img" aria-label="${esc(lab.title)}"></svg>
+            <div class="stepno">LIVE</div>
+            <div class="cap" id="cap" aria-live="polite"></div>
+          </div>
+          <div class="labctl">${lab.controls.map(ctl).join('')}</div>
+          <div class="ctrl">
+            <button type="button" id="l-pause" class="play"></button>
+            <button type="button" id="l-reset" title="처음 상태로">${ICON.replay}<span class="lbl">처음부터</span></button>
+            <button type="button" id="b-big" aria-label="크게 보기" title="크게 보기 (F)" aria-pressed="false">${ICON.big}<span class="lbl">크게</span></button>
+            <div class="sp"><span class="seg" role="group" aria-label="재생 속도">${speeds.map((x) => `<button type="button" data-sp="${x}" aria-pressed="${x === speed}">${x}×</button>`).join('')}</span></div>
+          </div>
+        </div>
+        <section class="explain"><div class="h"><b>${esc(lab.title)}</b></div><p>${esc(lab.intro)}</p></section>
+      </div>
+      <aside class="rail labside" aria-label="실험 결과">
+        <h3>실시간 숫자</h3><div class="stats" id="stats"></div>
+        <h3>도전 과제</h3><ol class="tasks" id="tasks">${lab.tasks.map((x, i) => `<li data-i="${i}" class="${doneTasks.has(i) ? 'ok' : ''}"><span class="i">${doneTasks.has(i) ? '✓' : i + 1}</span><span>${esc(x.t)}</span></li>`).join('')}</ol>
+        <p class="lhint">스위치·슬라이더를 바꾸면 바로 반영돼요. 과제를 달성하면 자동으로 체크됩니다.</p>
+      </aside>
+    </div>
+    <div class="toast" id="toast" role="status"></div>`;
+
+  const $ = (q) => app.querySelector(q);
+  const p = new Player($('#stage'), {
+    onCaption(c) { const el = $('#cap'); if (!el) return; el.textContent = c; el.classList.toggle('on', !!c); },
+  });
+  player = p;
+  p.speed = speed;
+  let s, a;
+  const start = () => {
+    s = lab.init();
+    a = p.lab();
+    lab.setup(a, s);
+    syncCtl();
+    window.__lab = { s, lab, player: p }; // 점검용
+  };
+  const syncCtl = () => {
+    app.querySelectorAll('.labctl [data-c]').forEach((el) => {
+      const c = lab.controls[+el.dataset.c];
+      if (c.type === 'radio') el.setAttribute('aria-pressed', String(s[c.key]) === el.dataset.v);
+      else if (c.type === 'toggle') el.setAttribute('aria-pressed', !!s[c.key]);
+      else if (c.type === 'range') { el.value = s[c.key]; $(`[data-val="${el.dataset.c}"]`).textContent = s[c.key] + (c.unit || ''); }
+    });
+  };
+  const changed = (key) => { lab.onChange?.(key, s, a); syncCtl(); };
+  app.querySelectorAll('.labctl [data-c]').forEach((el) => {
+    const c = lab.controls[+el.dataset.c];
+    if (c.type === 'range') el.addEventListener('input', () => { s[c.key] = +el.value; changed(c.key); });
+    else el.addEventListener('click', () => {
+      if (c.type === 'radio') { const v = c.options.find(([x]) => String(x) === el.dataset.v)[0]; s[c.key] = v; changed(c.key); }
+      else if (c.type === 'toggle') { s[c.key] = !s[c.key]; changed(c.key); }
+      else c.run(s, a);
+    });
+  });
+  const pauseBtn = $('#l-pause');
+  const drawPause = () => { pauseBtn.innerHTML = p.paused ? `${ICON.play}<span class="lbl">계속</span>` : `${ICON.pause}<span class="lbl">멈춤</span>`; };
+  pauseBtn.addEventListener('click', () => { p.paused = !p.paused; drawPause(); });
+  $('#l-reset').addEventListener('click', () => { p.paused = false; drawPause(); start(); });
+  app.querySelectorAll('[data-sp]').forEach((b) => b.addEventListener('click', () => {
+    speed = +b.dataset.sp; p.speed = speed; store.set('speed', speed);
+    app.querySelectorAll('[data-sp]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  }));
+  const box = $('.stagebox');
+  const setBig = (on) => { box.classList.toggle('big', on); document.body.classList.toggle('noscroll', on); $('#b-big').setAttribute('aria-pressed', on); $('#b-big .lbl').textContent = on ? '닫기' : '크게'; };
+  $('#b-big').addEventListener('click', () => setBig(!box.classList.contains('big')));
+
+  // 숫자와 도전 과제는 0.25초마다 갱신
+  let toastTimer;
+  const tick = () => {
+    if (!s) return;
+    let rows = [];
+    try { rows = lab.stats(s); } catch (err) { console.error('[lab stats]', err); }
+    $('#stats').innerHTML = rows.map(([k, v, c]) => `<div class="st${c ? ' c-' + c : ''}"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+    lab.tasks.forEach((x, i) => {
+      if (doneTasks.has(i)) return;
+      let ok = false;
+      try { ok = !!x.check(s); } catch { /* 무시 */ }
+      if (!ok) return;
+      doneTasks.add(i);
+      const all = store.get('labtasks', {}); all[t.id] = [...doneTasks]; store.set('labtasks', all);
+      const li = $(`#tasks li[data-i="${i}"]`); li.classList.add('ok', 'pop'); li.querySelector('.i').textContent = '✓';
+      const toast = $('#toast'); toast.textContent = `🎉 도전 과제 달성: ${x.t}`; toast.classList.add('on');
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 3200);
+    });
+  };
+  const iv = setInterval(tick, 250);
+  const onKey = (e) => {
+    if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); pauseBtn.click(); }
+    else if (e.key === 'Escape' && box.classList.contains('big')) setBig(false);
+    else if (e.key === 'f' || e.key === 'F') setBig(!box.classList.contains('big'));
+  };
+  document.addEventListener('keydown', onKey);
+  offKeys = () => { clearInterval(iv); clearTimeout(toastTimer); document.removeEventListener('keydown', onKey); document.body.classList.remove('noscroll'); };
+  drawPause();
+  start();
+  tick();
 }
 
 /* ---------- 코스 띠 ---------- */

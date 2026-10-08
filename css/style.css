@@ -227,6 +227,41 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 56px; }
 .tlink { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; text-decoration: none; color: var(--ink); background: color-mix(in srgb, var(--lc) 18%, var(--panel2)); border: 1px solid color-mix(in srgb, var(--lc) 45%, transparent); white-space: nowrap; }
 .tlink:hover { border-color: var(--lc); }
 
+/* 보기 방식 탭 */
+.modetabs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.modetabs a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 9px; text-decoration: none; font-size: 14.5px; font-weight: 700; color: var(--muted); }
+.modetabs a:hover { color: var(--ink); background: var(--panel2); }
+.modetabs a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+
+/* 실험실 */
+.labctl { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--panel); }
+.labctl .lc { display: inline-flex; align-items: center; gap: 8px; }
+.labctl .ll { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.labctl .ll b { color: var(--ink); font-family: var(--f-mono); }
+.labctl .rng input { width: 130px; accent-color: var(--accent); }
+.tgl { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border-radius: 99px; border: 1px solid var(--line2); background: var(--panel2); cursor: pointer; font-size: 13.5px; }
+.tgl i { width: 30px; height: 18px; border-radius: 9px; background: var(--line2); position: relative; transition: background .2s; }
+.tgl i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); transition: left .2s; }
+.tgl[aria-pressed="true"] { border-color: var(--accent); }
+.tgl[aria-pressed="true"] i { background: var(--accent); }
+.tgl[aria-pressed="true"] i::after { left: 14px; }
+.labctl .btn.act { min-height: 36px; padding: 0 14px; font-size: 13.5px; }
+.labside .stats { display: grid; gap: 6px; padding: 0 6px 8px; }
+.st { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 10px; border-radius: 10px; background: var(--panel2); font-size: 13.5px; }
+.st b { font: 600 17px/1 var(--f-mono); }
+.st.c-red b { color: var(--red); } .st.c-green b { color: var(--green); } .st.c-amber b { color: var(--amber); } .st.c-blue b { color: var(--blue); } .st.c-violet b { color: var(--violet); }
+.tasks { list-style: none; margin: 0; padding: 0 6px; display: grid; gap: 6px; }
+.tasks li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; line-height: 1.5; color: var(--muted); border: 1px dashed var(--line2); }
+.tasks li .i { flex: 0 0 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line2); display: grid; place-items: center; font: 600 11px/1 var(--f-mono); }
+.tasks li.ok { color: var(--ink); border-style: solid; border-color: color-mix(in srgb, var(--green) 50%, var(--line)); background: color-mix(in srgb, var(--green) 8%, var(--panel)); }
+.tasks li.ok .i { background: var(--green); border-color: var(--green); color: #111; }
+.tasks li.pop { animation: pop .5s ease; }
+@keyframes pop { 40% { transform: scale(1.04); } }
+.lhint { margin: 10px 8px 4px; font-size: 12.5px; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); z-index: 200; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 12px; background: var(--ink); color: var(--bg); font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.stagebox.big .labctl { max-height: 40%; overflow: auto; }
+
 /* 퀴즈 */
 .toquiz { display: inline-block; margin-top: 10px; font-size: 14px; font-weight: 700; color: var(--accent); text-decoration: none; }
 .toquiz:hover { text-decoration: underline; }
@@ -330,6 +365,10 @@ body.noscroll { overflow: hidden; }
   .pager a.nx { grid-column: 1; }
   .explain { padding: 14px; }
   .linkbtn span { display: none; }
+  .modetabs { display: flex; }
+  .modetabs a { flex: 1; justify-content: center; padding: 0 8px; }
+  .labctl .rng { width: 100%; }
+  .labctl .rng input { flex: 1; width: auto; }
   .coursebar { position: relative; padding-right: 44px; }
   .coursebar .cnx { margin-left: 0; width: 100%; }
   .coursebar .x { position: absolute; top: 4px; right: 4px; }
