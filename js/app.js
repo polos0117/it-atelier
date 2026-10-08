@@ -15,6 +15,7 @@ let heroPlayer = null;
 let offKeys = null;
 const done = new Set(store.get('done', []));
 const markDone = (id) => { if (!done.has(id)) { done.add(id); store.set('done', [...done]); } };
+const quizBest = store.get('quiz', {});
 
 const ICON = {
   first: '<svg viewBox="0 0 24 24"><path d="M5 5h2v14H5zM19 5v14L8 12z"/></svg>',
@@ -105,7 +106,7 @@ function renderHome() {
         ${items.map((t) => `<a class="card" href="#/t/${t.id}">
           <div class="meta"><span class="n">${String(TOPICS.indexOf(t) + 1).padStart(2, '0')}</span><span>${esc(t.cat)}</span></div>
           <h3>${esc(t.title)}</h3><p>${esc(t.sub)}</p>
-          <div class="foot"><span>${t.steps.length}단계${t.factory ? ' · 3D 있음' : ''}</span>${done.has(t.id) ? '<span class="done">✓ 완료</span>' : ''}</div>
+          <div class="foot"><span>${t.steps.length}단계${t.factory ? ' · 3D 있음' : ''}</span><span>${quizBest[t.id] != null && t.quiz?.length ? `<span class="qs">퀴즈 ${quizBest[t.id]}/${t.quiz.length}</span>` : ''}${done.has(t.id) ? '<span class="done">✓ 완료</span>' : ''}</span></div>
         </a>`).join('')}</div></section>`;
     }
     lists.innerHTML = html || '<p class="empty">찾는 주제가 없어요. 다른 단어로 검색해 보세요.</p>';
@@ -178,6 +179,7 @@ function renderTopic(t) {
             </span></div>
           <p id="ex-easy"></p>
           <div class="deep" id="ex-deep" hidden></div>
+          <a class="toquiz" id="ex-quiz" href="#quiz" hidden>다 봤다면 퀴즈 ${t.quiz?.length || 0}문제로 확인해 보세요 ↓</a>
         </section>
         <p class="kbd"><kbd>Space</kbd> 재생/멈춤 · <kbd>←</kbd> <kbd>→</kbd> 단계 이동 · <kbd>R</kbd> 다시 보기 · <kbd>F</kbd> 크게 보기</p>
       </div>
@@ -186,6 +188,7 @@ function renderTopic(t) {
         <ol>${t.steps.map((s, i) => `<li><button type="button" data-i="${i}"><span class="i">${i + 1}</span><span>${esc(s.t)}</span></button></li>`).join('')}</ol>
       </aside>
     </div>
+    ${t.quiz?.length ? `<section class="quiz" id="quiz" aria-labelledby="qh"><h2 id="qh">🧩 이해했는지 확인해 볼까요?</h2><div id="quiz-body"></div></section>` : ''}
     <div class="more">
       <div class="box analogy"><h3>💡 한 줄 비유</h3><p>${esc(t.analogy)}</p></div>
       <div class="box"><h3>📌 핵심 정리</h3><ul>${t.keys.map((k) => `<li>${esc(k)}</li>`).join('')}</ul></div>
@@ -212,6 +215,7 @@ function renderTopic(t) {
     const deep = $('#ex-deep');
     deep.textContent = s.deep || '';
     deep.hidden = mode !== 'deep' || !s.deep;
+    $('#ex-quiz').hidden = !(t.quiz?.length && n === t.steps.length - 1);
     $('#bigtext').innerHTML = `<b>${n + 1}. ${esc(s.t)}</b> ${esc(mode === 'deep' && s.deep ? s.deep : s.easy)}`;
   };
 
@@ -276,6 +280,14 @@ function renderTopic(t) {
     showText(p.step);
   }));
 
+  if (t.quiz?.length) {
+    $('#ex-quiz').addEventListener('click', (e) => { e.preventDefault(); $('#quiz').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    renderQuiz($('#quiz-body'), t, (step) => {
+      p.auto = false; p.paused = false; p.goto(step); p.onState();
+      $('.stagebox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   const onKey = (e) => {
     if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); togglePlay(); }
@@ -287,6 +299,43 @@ function renderTopic(t) {
   };
   document.addEventListener('keydown', onKey);
   offKeys = () => { document.removeEventListener('keydown', onKey); document.body.classList.remove('noscroll'); };
+}
+
+/* ---------- 퀴즈 ---------- */
+function renderQuiz(root, t, goStep) {
+  const qs = t.quiz;
+  let i = 0, score = 0;
+  const L = 'ABCD';
+  const draw = () => {
+    if (i >= qs.length) {
+      const best = Math.max(score, quizBest[t.id] ?? 0);
+      quizBest[t.id] = best;
+      store.set('quiz', quizBest);
+      const msg = score === qs.length ? '모두 맞혔어요! 이 주제는 확실히 이해했네요 🎉' : score ? '좋아요. 틀린 문제는 해당 단계를 다시 보면 금방 이해돼요.' : '괜찮아요. 그림을 한 번 더 보고 다시 풀어 보세요.';
+      root.innerHTML = `<div class="q-end"><b>${qs.length}문제 중 ${score}개 정답</b><p>${msg}</p><button type="button" class="btn" id="q-again">다시 풀기</button></div>`;
+      root.querySelector('#q-again').addEventListener('click', () => { i = 0; score = 0; draw(); });
+      return;
+    }
+    const q = qs[i];
+    root.innerHTML = `
+      <div class="q-n">문제 ${i + 1} / ${qs.length}</div>
+      <p class="q-q">${esc(q.q)}</p>
+      <div class="q-c" role="group" aria-label="보기">${q.c.map((c, k) => `<button type="button" data-k="${k}"><span class="l">${L[k]}</span><span>${esc(c)}</span></button>`).join('')}</div>
+      <div class="q-fb" aria-live="polite"></div>`;
+    const btns = [...root.querySelectorAll('.q-c button')];
+    btns.forEach((b) => b.addEventListener('click', () => {
+      const k = +b.dataset.k, ok = k === q.a;
+      if (ok) score++;
+      btns.forEach((x, j) => { x.disabled = true; if (j === q.a) x.classList.add('ok'); else if (j === k) x.classList.add('no'); });
+      const fb = root.querySelector('.q-fb');
+      fb.innerHTML = `<p class="${ok ? 'ok' : 'no'}"><b>${ok ? '정답이에요!' : '아쉬워요.'}</b> ${esc(q.why)}</p>
+        <div class="q-act">${!ok && q.step != null && t.steps[q.step] ? `<button type="button" class="btn" id="q-step">${q.step + 1}단계 다시 보기</button>` : ''}
+        <button type="button" class="btn main" id="q-next">${i + 1 < qs.length ? '다음 문제 →' : '결과 보기'}</button></div>`;
+      fb.querySelector('#q-step')?.addEventListener('click', () => goStep(q.step));
+      fb.querySelector('#q-next').addEventListener('click', () => { i++; draw(); root.querySelector('.q-c button, .btn')?.focus({ preventScroll: true }); });
+    }));
+  };
+  draw();
 }
 
 /* ---------- 시작 ---------- */
