@@ -250,8 +250,12 @@ function renderTopic(t, startStep = 0) {
     $('#bigtext').innerHTML = `<b>${n + 1}. ${esc(s.t)}</b> ${esc(mode === 'deep' && s.deep ? s.deep : s.easy)}`;
   };
 
+  let pendingStep = startStep > 1 ? Math.min(startStep, t.steps.length) - 1 : null;
   const p = new Player($('#stage'), {
     onStep(n) {
+      // 공유 링크로 열 때는 목표 단계에 닿기 전까지 주소를 건드리지 않는다
+      if (pendingStep != null && n !== pendingStep) return void showText(n);
+      pendingStep = null;
       try { history.replaceState(null, '', `#/t/${t.id}${n ? '/' + (n + 1) : ''}`); } catch { /* 무시 */ }
       showText(n);
       $('#stepno').textContent = `STEP ${n + 1}/${t.steps.length}`;
