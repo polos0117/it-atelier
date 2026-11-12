@@ -5,7 +5,7 @@ export const IDS = [
   'http', 'rest', 'tcp', 'https', 'session', 'password', 'algo', 'prompt',
   'httpver', 'cache', 'lb', 'mq', 'dbindex', 'sqltx', 'git', 'cicd',
   'llm', 'nn', 'brain', 'rag', 'agent', 'mcp',
-  'replication', 'hashring', 'cap', 'ratelimit', 'k8s', 'raft',
+  'replication', 'hashring', 'cap', 'ratelimit', 'k8s', 'raft', 'quantum',
 ];
 
 export async function loadTopics() {
@@ -41,7 +41,7 @@ export const COURSES = [
   { id: 'backend', name: '백엔드 개발자', color: 'violet', desc: '데이터를 다루고, 느려지지 않고, 몰려도 버티는 서버.', ids: ['rest', 'sqltx', 'dbindex', 'cache', 'mq', 'lb', 'replication', 'ratelimit'] },
   { id: 'infra', name: '인프라·데브옵스', color: 'teal', desc: '코드가 서버에 올라가고 살아 있게 하는 일.', ids: ['nat', 'lb', 'cicd', 'k8s', 'cache', 'ratelimit', 'replication'] },
   { id: 'dist', name: '분산 시스템 심화', color: 'red', desc: '서버 여러 대가 하나처럼 움직이게 만드는 원리.', ids: ['replication', 'hashring', 'cap', 'raft', 'mq', 'k8s'] },
-  { id: 'cs', name: '컴퓨터 과학 맛보기', color: 'amber', desc: '0과 1에서 알고리즘, 그리고 AI까지.', ids: ['bits', 'computer', 'algo', 'dbindex', 'llm'] },
+  { id: 'cs', name: '컴퓨터 과학 맛보기', color: 'amber', desc: '0과 1에서 알고리즘, AI, 그리고 양자컴퓨터까지.', ids: ['bits', 'computer', 'algo', 'dbindex', 'llm', 'quantum'] },
   { id: 'ai', name: 'AI 제대로 알기', color: 'violet', desc: 'AI에게 잘 묻는 법부터, AI가 배우고 찾고 도구를 쓰는 원리까지.', ids: ['prompt', 'llm', 'nn', 'brain', 'rag', 'agent', 'mcp'] },
   { id: 'interview', name: '면접 단골 10선', color: 'pink', desc: '개발자 면접에서 자주 나오는 질문만 골랐어요.', ids: ['web', 'dns', 'tcp', 'https', 'session', 'cache', 'dbindex', 'sqltx', 'lb', 'cap'] },
 ];
