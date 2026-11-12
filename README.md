@@ -1,7 +1,7 @@
 # 움직이는 IT
 
 https://polos0117.github.io/it-atelier/ — IT 개념을 움직이는 그림과 단계별 설명으로 배우는 곳.
-입문(컴퓨터·0과 1·인터넷)부터 고급(복제·샤딩, CAP, 일관된 해싱, 쿠버네티스, Raft)까지, 알고리즘과 AI(LLM)를 포함한 28개 주제.
+입문(컴퓨터·0과 1·인터넷)부터 고급(복제·샤딩, CAP, 일관된 해싱, 쿠버네티스, Raft)까지, 알고리즘과 AI(프롬프트·LLM·신경망·RAG·에이전트·MCP)를 포함한 33개 주제, 직접 실험실 12개.
 
 - 빌드 없음. `index.html` + `css/style.css` + `js/*.js`(ES 모듈)를 그대로 올린다.
 - 주제마다 **쉽게**(비유 중심) / **자세히**(실무 기술) 설명을 바꿔 볼 수 있다.
@@ -62,7 +62,7 @@ export default {
 
 `js/labs/<주제id>.js`를 만들고 `js/labs/index.js`의 `LAB_IDS`에 넣는다. 모양은 `lb.js`를 따른다.
 
-- `controls`: `radio`·`toggle`·`range`·`button` — 값은 상태 `s[key]`에 바로 들어가고 `onChange(key, s, a)`가 불린다.
+- `controls`: `radio`·`toggle`·`range`(표시 형식은 `unit` 또는 `fmt(값)`)·`button` — 값은 상태 `s[key]`에 바로 들어가고 `onChange(key, s, a)`가 불린다.
 - `setup(a, s)`: 무대를 꾸리고 `a.every(ms, fn)`·`a.spawn(fn)`으로 계속 도는 흐름을 띄운다(배속·멈춤·처음부터를 따른다). `setTimeout`은 쓰지 않는다.
 - `stats(s)`: 실시간 숫자 `[[이름, 값, 색?]]`. `tasks`: `{ t, check(s) }` — 0.25초마다 검사해 달성하면 체크(브라우저에 저장).
 

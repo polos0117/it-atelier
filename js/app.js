@@ -420,7 +420,7 @@ async function renderLab(t) {
       const c = lab.controls[+el.dataset.c];
       if (c.type === 'radio') el.setAttribute('aria-pressed', String(s[c.key]) === el.dataset.v);
       else if (c.type === 'toggle') el.setAttribute('aria-pressed', !!s[c.key]);
-      else if (c.type === 'range') { el.value = s[c.key]; $(`[data-val="${el.dataset.c}"]`).textContent = s[c.key] + (c.unit || ''); }
+      else if (c.type === 'range') { el.value = s[c.key]; $(`[data-val="${el.dataset.c}"]`).textContent = c.fmt ? c.fmt(s[c.key]) : s[c.key] + (c.unit || ''); }
     });
   };
   const changed = (key) => { lab.onChange?.(key, s, a); syncCtl(); };
