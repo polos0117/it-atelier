@@ -227,29 +227,29 @@ export default {
         a.edge('atk', 'bank', { arrow: false });
         a.caption('경고 창에서 "계속"을 누르면…');
         const cur = chip(a, '👆', 184, 290, 'gray', { w: 36, h: 30 });
-        await a.move(cur, [262, 226], 800);
+        await a.move(cur, [262, 226], 600);
         await a.flash(go);
         await a.fadeOut(cur, 200);
         a.note('n-l1', 184, 300, '공격자의 가짜 인증서를\n내가 직접 승인한 셈', { color: 'red' });
-        await a.wait(300);
+        await a.wait(200);
         a.caption('주소를 http://로 열면 공격자가 자물쇠를 벗겨 냅니다');
-        await hop(a, 'me', 'atk', 'http://', 'amber', { dur: 550 });
-        await hop(a, 'atk', 'bank', '🔒 https', 'green', { dur: 550 });
-        await hop(a, 'bank', 'atk', '🔒 응답', 'green', { dur: 550 });
-        await hop(a, 'atk', 'me', '평문 응답', 'red', { dur: 550 });
+        await hop(a, 'me', 'atk', 'http://', 'amber', { dur: 420 });
+        await hop(a, 'atk', 'bank', '🔒 https', 'green', { dur: 420 });
+        await hop(a, 'bank', 'atk', '🔒 응답', 'green', { dur: 420 });
+        await hop(a, 'atk', 'me', '평문 응답', 'red', { dur: 420 });
         a.badge('atk', '다 보임', 'red');
         a.note('n-r1', 536, 330, '서버와는 https, 내 쪽은 http\n→ 공격자가 내용을 다 봄', { color: 'red' });
-        await a.wait(800);
+        await a.wait(500);
         a.caption('HSTS: "이 사이트는 앞으로 https로만" — 브라우저가 기억해요');
         await a.fadeOut('n-r1', 200);
         a.badge('atk', null);
         a.badge('me', 'HSTS', 'green');
-        await hop(a, 'me', 'atk', '🔒 https', 'green', { dur: 550 });
-        await hop(a, 'atk', 'bank', '🔒 https', 'green', { dur: 550 });
+        await hop(a, 'me', 'atk', '🔒 https', 'green', { dur: 420 });
+        await hop(a, 'atk', 'bank', '🔒 https', 'green', { dur: 420 });
         a.badge('atk', '못 읽음', 'gray');
         a.note('n-r2', 536, 330, '처음부터 https로 접속\n→ 벗겨 낼 틈이 없음', { color: 'green' });
         a.note('n-l2', 184, 376, 'HSTS 사이트는 "계속" 버튼도 없음', { color: 'green' });
-        await a.wait(800);
+        await a.wait(500);
       },
     },
     {

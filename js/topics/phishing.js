@@ -188,6 +188,7 @@ export default {
         a.node('bank', 638, 230, { label: '진짜 은행', sub: 'bank.example', color: 'green', w: 136, h: 66 });
         a.node('atk', 360, 84, { label: '공격자', icon: '🕵️', color: 'red', w: 120, h: 64 });
         a.edge('fake', 'atk', { dashed: true, color: 'red', arrow: false });
+        a.edge('u', 'fake', { both: true }); a.edge('fake', 'bank', { both: true });
         a.raw('path', { d: 'M638 266 V346 H82 V266', class: 'edge dashed', 'marker-end': 'url(#ah)' }, 'edge');
         a.text(360, 334, '📱 휴대폰 문자', { size: 11.5, weight: 700, cls: 'muted' });
         const L1 = 214, L2 = 246;

@@ -337,9 +337,9 @@ export default {
         SY.forEach((y, i) => a.edge('u', 's' + i, { id: 'eu' + i, hidden: i > 0 }));
         SY.forEach((y, i) => a.edge('s' + i, 'q', { id: 'eq' + i, dashed: true, hidden: i > 0 }));
         a.caption('자주 찾는 페이지는 캐시가 바로 답해요');
-        await hop(a, 'u', 'cache', 'GET /', 'blue', { dur: 600 });
+        await hop(a, 'u', 'cache', 'GET /', 'blue', { dur: 450 });
         a.badge('cache', 'HIT', 'green');
-        await hop(a, 'cache', 'u', '바로 응답', 'green', { dur: 600 });
+        await hop(a, 'cache', 'u', '바로 응답', 'green', { dur: 450 });
         a.caption('몰리면 서버를 자동으로 늘려요');
         await a.par(...[0, 1, 2].map((i) => a.wait(i * 180).then(() => hop(a, 'u', 's0', '', 'blue', { dur: 500, w: 18 }))));
         a.badge('s0', '부하 90%', 'red');
@@ -348,14 +348,14 @@ export default {
         a.badge('s1', '추가', 'teal');
         a.badge('s2', '추가', 'teal');
         a.badge('s0', '부하 30%', 'green');
-        await a.wait(300);
+        await a.wait(200);
         a.caption('무거운 일은 큐에 넣고 바로 "접수됨"');
-        await hop(a, 'u', 's1', '보고서 만들기', 'amber', { dur: 700 });
-        await hop(a, 's1', 'q', '작업', 'violet', { dur: 500 });
+        await hop(a, 'u', 's1', '보고서 만들기', 'amber', { dur: 525 });
+        await hop(a, 's1', 'q', '작업', 'violet', { dur: 375 });
         a.badge('q', '대기 1', 'violet');
-        await hop(a, 's1', 'u', '202 접수됨', 'green', { dur: 700 });
+        await hop(a, 's1', 'u', '202 접수됨', 'green', { dur: 525 });
         a.note('n-plan', 360, 384, '대응 계획: 통신사·클라우드 DDoS 방어 연락처 · 평소 트래픽 기준선\n긴급 차단 규칙 · 누가 무엇을 할지 미리 정하고 훈련', { color: 'amber' });
-        await a.wait(900);
+        await a.wait(600);
       },
     },
     {
