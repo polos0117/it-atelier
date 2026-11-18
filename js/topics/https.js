@@ -37,7 +37,7 @@ export default {
   ],
   terms: [
     ['TLS', 'Transport Layer Security. HTTP 아래에서 암호화·인증을 맡는 규약. HTTPS = HTTP + TLS'],
-    ['인증서', '"이 공개키는 bank.com의 것"이라고 CA가 서명해 준 전자 신분증'],
+    ['인증서', '"이 공개키는 bank.example의 것"이라고 CA가 서명해 준 전자 신분증'],
     ['CA', 'Certificate Authority. 인증서를 발급·서명하는 기관. 루트 CA 목록은 OS·브라우저에 내장'],
     ['대칭키 암호', '암호화·복호화에 같은 키를 쓰는 방식. 빠르다. 예: AES-GCM, ChaCha20'],
     ['비대칭키 암호', '공개키·개인키 한 쌍을 쓰는 방식. 서명·키 교환에 쓰며 느리다. 예: RSA, ECDSA'],
@@ -51,7 +51,7 @@ export default {
   ],
   setup(a) {
     a.node('pc', PC[0], PC[1], { label: '내 브라우저', icon: '💻', color: 'blue', h: 70 });
-    a.node('srv', SV[0], SV[1], { label: '은행 서버', sub: 'bank.com', icon: '🏦', color: 'green', w: 128, h: 70 });
+    a.node('srv', SV[0], SV[1], { label: '은행 서버', sub: 'bank.example', icon: '🏦', color: 'green', w: 128, h: 70 });
     a.edge('pc', 'srv', { id: 'wire', both: true, label: 'HTTP — 평문', ly: -14 });
     a.node('eve', 360, 205, { label: '도청자', icon: '🕵️', color: 'red', shape: 'person', w: 116, h: 52 });
     a.edge('eve', [MID[0], MID[1] + 4], { id: 'tap', dashed: true, color: 'red', arrow: false });
@@ -98,7 +98,7 @@ export default {
         a.caption('서버 → 브라우저: 키 조각 + 신분증 + 완료');
         const items = [['ServerHello 🔑B', 'green'], ['인증서 📜', 'amber'], ['Finished ✓', 'teal']];
         await a.par(...items.map(([l, c], i) => a.wait(i * 330).then(() => a.send('srv', 'pc', l, { color: c, dur: 1100 }))));
-        a.note('n-sh', 560, 320, 'ServerHello: 키 조각 🔑B\n인증서: "나는 bank.com"\nFinished: 준비 끝', { color: 'green' });
+        a.note('n-sh', 560, 320, 'ServerHello: 키 조각 🔑B\n인증서: "나는 bank.example"\nFinished: 준비 끝', { color: 'green' });
         a.note('n-rtt', 180, 320, '왕복 1번 = 1-RTT\n(TLS 1.2는 2번)', { color: 'teal' });
         await a.wait(900);
       },
@@ -106,13 +106,13 @@ export default {
     {
       t: '인증서 확인 — 믿을 만한 기관의 도장인가',
       easy: '신분증은 누구나 위조할 수 있으니, 브라우저는 "이 신분증에 찍힌 도장이 내가 원래 믿는 기관(CA)의 것인가?"를 거슬러 올라가며 확인합니다.',
-      deep: '리프 인증서(bank.com)는 중간 CA가, 중간 CA 인증서는 루트 CA가 서명합니다. 브라우저는 각 서명을 상위 공개키로 검증하고, 루트가 OS/브라우저 신뢰 저장소에 있는지, 유효 기간, 도메인(SAN) 일치, 폐기 여부(브라우저가 미리 받아 둔 폐기 목록 — Chrome CRLSets, Firefox CRLite 등)를 확인합니다. CertificateVerify로 서버가 그 인증서의 개인키를 실제로 가졌는지도 증명됩니다.',
+      deep: '리프 인증서(bank.example)는 중간 CA가, 중간 CA 인증서는 루트 CA가 서명합니다. 브라우저는 각 서명을 상위 공개키로 검증하고, 루트가 OS/브라우저 신뢰 저장소에 있는지, 유효 기간, 도메인(SAN) 일치, 폐기 여부(브라우저가 미리 받아 둔 폐기 목록 — Chrome CRLSets, Firefox CRLite 등)를 확인합니다. CertificateVerify로 서버가 그 인증서의 개인키를 실제로 가졌는지도 증명됩니다.',
       async run(a) {
         a.clear('pkt', 'top', 'zone');
         a.zone('z-trust', 34, 262, 196, 134, { label: '브라우저 신뢰 목록', color: 'amber' });
         a.node('root', 130, 340, { label: '루트 CA', sub: '처음부터 내장', icon: '🏛️', color: 'amber', w: 128, h: 66, layer: 'top' });
         a.node('mid', 360, 340, { label: '중간 CA', sub: '루트가 서명', icon: '🏢', color: 'violet', w: 120, h: 66, layer: 'top' });
-        a.node('leaf', 590, 340, { label: 'bank.com', sub: '중간 CA가 서명', icon: '📜', color: 'gray', w: 132, h: 66, layer: 'top' });
+        a.node('leaf', 590, 340, { label: 'bank.example', sub: '중간 CA가 서명', icon: '📜', color: 'gray', w: 132, h: 66, layer: 'top' });
         a.text(245, 340, '◀ 서명', { size: 11.5, cls: 'muted', weight: 700 });
         a.text(475, 340, '◀ 서명', { size: 11.5, cls: 'muted', weight: 700 });
         a.caption('도장을 따라 거꾸로 올라가며 확인');
@@ -124,7 +124,7 @@ export default {
         await a.move(chk, [[360, 250], [130, 250], [130, 296]], 800);
         a.hl('root', true, 'green'); a.badge('root', '신뢰 ✓', 'green');
         await a.fadeOut(chk, 200);
-        a.badge('pc', '진짜 bank.com ✓', 'green');
+        a.badge('pc', '진짜 bank.example ✓', 'green');
         await a.flash('pc');
       },
     },
