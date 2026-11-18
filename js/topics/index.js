@@ -40,6 +40,7 @@ export const COURSES = [
   { id: 'web', name: '웹 개발 기초', color: 'blue', desc: '웹 서비스를 만들기 전에 꼭 알아야 할 대화법과 보안.', ids: ['web', 'http', 'rest', 'tcp', 'https', 'session', 'password', 'cache'] },
   { id: 'backend', name: '백엔드 개발자', color: 'violet', desc: '데이터를 다루고, 느려지지 않고, 몰려도 버티는 서버.', ids: ['rest', 'sqltx', 'dbindex', 'cache', 'mq', 'lb', 'replication', 'ratelimit'] },
   { id: 'infra', name: '인프라·데브옵스', color: 'teal', desc: '코드가 서버에 올라가고 살아 있게 하는 일.', ids: ['nat', 'lb', 'cicd', 'k8s', 'cache', 'ratelimit', 'replication'] },
+  { id: 'security', name: '보안 기초', color: 'red', desc: '비밀번호 저장부터 암호화 통신, 공격 막기, AI 시대의 새 위협과 양자 이후의 암호까지.', ids: ['password', 'session', 'https', 'nat', 'ratelimit', 'prompt', 'mcp', 'quantum'] },
   { id: 'dist', name: '분산 시스템 심화', color: 'red', desc: '서버 여러 대가 하나처럼 움직이게 만드는 원리.', ids: ['replication', 'hashring', 'cap', 'raft', 'mq', 'k8s'] },
   { id: 'cs', name: '컴퓨터 과학 맛보기', color: 'amber', desc: '0과 1에서 알고리즘, AI, 그리고 양자컴퓨터까지.', ids: ['bits', 'computer', 'algo', 'dbindex', 'llm', 'quantum'] },
   { id: 'ai', name: 'AI 제대로 알기', color: 'violet', desc: 'AI에게 잘 묻는 법부터, AI가 배우고 찾고 도구를 쓰는 원리까지.', ids: ['prompt', 'llm', 'nn', 'brain', 'rag', 'agent', 'mcp'] },
