@@ -124,7 +124,7 @@ async function outbound(a, from, to, label, color, rule) {
   return true;
 }
 
-const DIAGRAM = ['zi', 'zn', 'fw', 'guest', 'bot', 'admin', 'site', 'web', 'ssh', 'db', 'pc',
+const DIAGRAM = ['zi', 'zil', 'zn', 'fw', 'guest', 'bot', 'admin', 'site', 'web', 'ssh', 'db', 'pc',
   ...Object.values(OUT).map((r) => 'el' + r), ...Object.values(IN).map((r) => 'er' + r)];
 
 // 종류 비교표
@@ -170,7 +170,9 @@ export default {
   setup(a) {
     T.g = null;
     T.rows = [];
-    a.zone('zi', 12, 12, 148, 278, { label: '인터넷 · 바깥', color: 'gray' });
+    // 왼쪽 위 구석은 단계 번호가 덮으므로 바깥 영역 이름은 오른쪽에 붙인다
+    a.zone('zi', 12, 12, 148, 278, { color: 'gray' });
+    a.text(150, 26, '인터넷 · 바깥', { size: 11.5, weight: 700, anchor: 'end', color: 'gray', layer: 'zone', id: 'zil' });
     a.zone('zn', 552, 12, 156, 278, { label: '회사 안 · 내부망', color: 'blue' });
     const L = [['guest', '🙂 손님', '203.0.113.25', 'blue'], ['bot', '🤖 공격 봇', 'bad.example', 'red'],
       ['admin', '🏠 관리자 집', '203.0.113.7', 'teal'], ['site', '🌍 외부 사이트', 'www.example', 'gray']];

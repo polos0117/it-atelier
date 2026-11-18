@@ -66,8 +66,8 @@ export default {
     a.node('fwe', 140, 215, { label: '외부', sub: '방화벽', icon: '🧱', color: 'amber', w: 36, h: 170, size: 13 });
     a.node('web', 274, 215, { label: '웹 서버', icon: '🌐', sub: '정상', color: 'green', w: 96, h: 66, size: 14 });
     a.node('fwi', 440, 215, { label: '내부', sub: '방화벽', icon: '🧱', color: 'amber', w: 36, h: 170, size: 13 });
-    a.node('pc1', 524, 92, { label: 'PC 1', icon: '💻', color: 'blue', w: 88, h: 50, size: 14 });
-    a.node('pc2', 640, 92, { label: 'PC 2', icon: '💻', color: 'blue', w: 88, h: 50, size: 14 });
+    a.node('pc1', 524, 104, { label: 'PC 1', icon: '💻', color: 'blue', w: 88, h: 50, size: 14 });
+    a.node('pc2', 640, 104, { label: 'PC 2', icon: '💻', color: 'blue', w: 88, h: 50, size: 14 });
     a.node('db', 590, 222, { label: '고객 DB', sub: `${fmt(TOTAL)}건`, shape: 'db', color: 'violet', w: 120, h: 70, size: 14 });
     a.node('files', 590, 352, { label: '파일 서버', icon: '🗂️', color: 'teal', w: 120, h: 54, size: 14 });
     // 선
@@ -96,7 +96,8 @@ export default {
         if (k === 'web') a.setNode('web', { sub: on ? '장악됨' : '정상' });
         else if (k !== 'db') a.badge(k, on ? '장악' : '', 'red');
       }
-      a.badge('db', s.own.db ? '통째로 장악' : s.exposed ? `유출 ${fmt(s.exposed)}` : '', 'red');
+      a.badge('db', s.own.db ? '통째로 장악' : s.exposed ? '유출' : '', 'red');
+      a.setNode('db', { sub: s.exposed ? `유출 ${fmt(s.exposed)}건` : `${fmt(TOTAL)}건` });
       if (flat) { st1.textContent = '평평한 망: 웹 서버 바로 옆에'; st2.textContent = 'PC·파일 서버·DB가 있어요'; }
       else if (s.narrow) { st1.textContent = '내부 방화벽: 웹 → DB 3306만'; st2.textContent = '나머지 내부 이동은 차단'; }
       else { st1.textContent = '내부 방화벽: 전부 허용'; st2.textContent = '구역은 나눴지만 규칙이 넓음'; }
@@ -133,6 +134,7 @@ export default {
         s.own.web = true;
         resetSince(s);
         s.paint();
+        a.caption('웹 서버 장악 — 이제 옆 기기로 옮겨 가려고 해요');
         await a.flash('web');
       });
     };

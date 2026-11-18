@@ -355,8 +355,8 @@ export default {
         a.hl('a2'); a.hl('b2');
         a.hl('ea2'); a.hl('eb2');
         await a.par(
-          a.send([184, 268], [184, 300], '연결 #2', { color: 'amber', w: 72, dur: 700 }),
-          a.send([536, 268], [536, 300], '/cart', { color: 'blue', w: 60, dur: 700 }),
+          a.send([184, 262], [184, 290], '연결 #2', { color: 'amber', w: 72, dur: 700 }),
+          a.send([536, 262], [536, 290], '/cart', { color: 'blue', w: 60, dur: 700 }),
         );
         await a.par(a.flash('a2'), a.flash('b2'));
         a.text(184, 396, '내용을 안 열어 보니 빠르고 단순', { size: 12, cls: 'muted', weight: 700 });

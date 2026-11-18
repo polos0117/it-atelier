@@ -56,7 +56,9 @@ export default {
     let fly = 0, seq = 0, conn = 0;
     const states = new Map(); // 상태표: 연결 번호 → 기록 시각
 
-    a.zone('zi', 12, 10, 148, 272, { label: '인터넷 · 바깥', color: 'gray' });
+    // 왼쪽 위 구석은 LIVE 표시가 덮으므로 바깥 영역 이름은 오른쪽에 붙인다
+    a.zone('zi', 12, 10, 148, 272, { color: 'gray' });
+    a.text(150, 24, '인터넷 · 바깥', { size: 11.5, weight: 700, anchor: 'end', color: 'gray', layer: 'zone' });
     a.zone('zn', 552, 10, 156, 272, { label: '회사 안 · 내부망', color: 'blue' });
     const LN = [['guest', '🙂 손님', '203.0.113.25', 'blue'], ['bot', '🤖 공격 봇', 'bad.example', 'red'],
       ['admin', '🏠 관리자 집', '203.0.113.7', 'teal'], ['site', '🌍 외부 사이트', 'www.example', 'gray']];
@@ -119,13 +121,11 @@ export default {
     };
     const mark = () => {
       const c = s.c;
-      // 숫자는 노드 아래 줄에 — 배지는 무대 밖으로 삐져나가므로 쓰지 않는다(봇만 위쪽 가운데)
+      // 숫자는 노드 아래 줄에 — 배지는 무대 밖으로 삐져나가거나 옆 노드를 가리므로 쓰지 않는다
       a.setNode('ssh', { sub: c.sshBotPass ? `:22 · 봇 침입 ${c.sshBotPass}` : ':22', color: c.sshBotPass ? 'red' : 'violet' });
       a.setNode('db', { sub: c.dbAtk ? `:3306 · 봇 침입 ${c.dbAtk}` : ':3306', color: c.dbAtk ? 'red' : 'amber' });
       a.setNode('pc', { sub: c.pcHit ? `10.0.0.50 · 침입 ${c.pcHit}` : '10.0.0.50', color: c.pcHit ? 'red' : 'blue' });
-      a.badge('bot', c.leak ? `감염 PC 연락 ${c.leak}` : '', 'pink');
-      const b = a.get('bot').badgeEl;
-      if (b) b.setAttribute('transform', 'translate(0 -27)');
+      a.setNode('bot', { sub: c.leak ? `bad.example · 연락 ${c.leak}` : 'bad.example' });
     };
     s.paint = () => {
       rowsIn = drawRows(gin, TIN, inRules());

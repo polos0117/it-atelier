@@ -70,10 +70,10 @@ function resetRows(a) {
 /** 표를 위에서부터 훑으며 맞는 줄에 ✓, 아닌 줄에 ✗ */
 async function scan(a, n, hits) {
   for (let i = 0; i < n; i++) {
-    await rowBg(a, i, 1, 'amber', 150);
-    await a.wait(90);
+    await rowBg(a, i, 1, 'amber', 110);
+    await a.wait(60);
     setMark(i, hits.includes(i) ? '✓' : '✗', hits.includes(i) ? 'green' : null);
-    await rowBg(a, i, hits.includes(i) ? 0.45 : 0, 'amber', 120);
+    await rowBg(a, i, hits.includes(i) ? 0.45 : 0, 'amber', 90);
   }
 }
 
@@ -205,23 +205,23 @@ export default {
         a.caption('가장 자세한 줄(/24)이 이겨요');
         await rowBg(a, 2, 1, 'teal', 220);
         await a.move(p, [310, 140], 0);
-        await a.move(p, ['nbC', [566, 140]], 900);
+        await a.move(p, ['nbC', [566, 140]], 750);
         await a.fadeOut(p, 200);
         a.badge('lab', '도착 ✓', 'green');
         resetRows(a);
         a.caption('198.51.100.20 — 10.으로 시작하지도 않아요');
         const q = a.packet('198.51.100.20', { at: 'me', color: 'green', w: 108, size: 11.5 });
-        await a.move(q, [156, 140], 650);
+        await a.move(q, [156, 140], 500);
         await scan(a, 4, [3]);
         a.caption('나머지 전부 → 기본 경로로');
         await rowBg(a, 3, 1, 'green', 220);
         await a.move(q, [310, 150], 0);
-        await a.move(q, ['isp', [566, 230]], 900);
+        await a.move(q, ['isp', [566, 230]], 750);
         await a.fadeOut(q, 200);
         a.hl('rt', false);
         a.badge('inet', '도착 ✓', 'green');
         a.note('n2', 182, 250, '여러 줄이 맞으면 가장 자세한 줄\n아무것도 안 맞으면 기본 경로', { color: 'amber' });
-        await a.wait(700);
+        await a.wait(400);
       },
     },
     {
@@ -244,11 +244,11 @@ export default {
         const p = a.packet('TTL 64', { at: start, color: 'blue', w: 60, size: 12 });
         let ttl = 64;
         for (const [id, x] of HOPS) {
-          await a.move(p, [x - 60, LY], 300);
+          await a.move(p, [x - 60, LY], 260);
           a.hl(id);
           ttl--;
           p.set(`TTL ${ttl}`);
-          await a.wait(160);
+          await a.wait(120);
           a.hl(id, false);
           await a.move(p, [x + 60, LY], 0);
         }
@@ -267,7 +267,7 @@ export default {
           const pr = a.packet(`TTL ${k}`, { at: start, color: 'violet', w: 60, size: 12 });
           let t = k, stopX = 578, who = 'srv';
           for (const [id, x] of HOPS) {
-            await a.move(pr, [x - 60, LY], 220);
+            await a.move(pr, [x - 60, LY], 190);
             t--;
             pr.set(`TTL ${t}`);
             if (t === 0) { stopX = x - 60; who = id; break; }
@@ -275,11 +275,11 @@ export default {
           }
           if (who === 'srv') await a.move(pr, [578, LY], 160);
           if (who !== 'srv') { pr.set(null, 'red'); a.hl(who, true, 'red'); }
-          await a.wait(120);
-          await a.fadeOut(pr, 120);
+          await a.wait(80);
+          await a.fadeOut(pr, 100);
           const back = a.packet(who === 'srv' ? '응답' : '시간 초과', { at: [stopX, LY], color: who === 'srv' ? 'green' : 'red', size: 11.5 });
-          await a.move(back, start, 380);
-          await a.fadeOut(back, 120);
+          await a.move(back, start, 320);
+          await a.fadeOut(back, 100);
           if (who !== 'srv') a.hl(who, false);
           const y = 228 + k * 24;
           const [name, ip, ms] = res[k - 1];
