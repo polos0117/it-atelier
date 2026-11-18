@@ -123,7 +123,7 @@ export default {
         await a.fadeOut(b, 250);
         a.badge('c2', '접속 안 됨', 'red');
         a.note('n1', 400, 290, '진짜 손님이 줄을 못 서요', { color: 'red' });
-        a.note('n2', 400, 370, '공격자가 한 명이면? 그 주소만 막으면 끝 — 문제는 수천 명일 때', { color: 'amber' });
+        a.note('n2', 400, 370, '공격자가 한 명이면? 대개 그 주소만 막으면 돼요 — 문제는 수천 대일 때', { color: 'amber' });
         await a.wait(800);
       },
     },
