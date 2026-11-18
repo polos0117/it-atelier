@@ -38,6 +38,14 @@ const RULES_TEMP = [
 ];
 
 const fill = (c, k) => `fill: color-mix(in srgb, var(--${c}) ${k}%, transparent)`;
+/** 배지 — 오른쪽 열 노드는 무대 밖으로 삐져나가지 않게 노드 안쪽으로 붙인다 */
+function badge(a, id, s, color) {
+  a.badge(id, s, color);
+  const n = a.get(id);
+  if (!n.badgeEl) return;
+  const w = Math.max(22, String(s).length * (/[가-힣]/.test(s) ? 12 : 7.4) + 12);
+  n.badgeEl.setAttribute('transform', `translate(${n.w / 2 - w / 2 - 4} ${-n.h / 2 - 2})`);
+}
 
 /** 표의 한 줄. cells가 문자열이면 한 칸짜리 메모 줄 */
 function row(a, i, cells, o = {}) {
@@ -212,7 +220,7 @@ export default {
         a.caption('지키는 사람이 없다면…');
         await go(OUT.bot, IN.db, ':3306', 'red', 1200);
         a.hl('db', true, 'red');
-        a.badge('db', '침입!', 'red');
+        badge(a, 'db', '침입!', 'red');
         await a.flash('db');
         a.note('n1', 360, 356, '문이 다 열려 있으면 공격 봇도 DB까지 그대로 들어와요\n→ 입구에 경비실(방화벽)이 필요합니다', { color: 'red' });
         await a.wait(700);
@@ -224,7 +232,7 @@ export default {
       deep: '대부분의 네트워크 방화벽·라우터 ACL·리눅스 iptables/nftables 체인은 위에서부터 평가해 첫 일치(first match) 규칙의 동작(allow, 또는 drop/reject)을 적용합니다. 그래서 넓은 규칙이 위에 있으면 아래의 좁은 규칙은 쓰이지 않는 "가려진 규칙(shadowed rule)"이 돼요. 다만 클라우드 보안 그룹처럼 허용 규칙만 모아 순서 없이 합쳐 보는 방식도 있습니다.',
       async run(a) {
         a.clear();
-        a.badge('db', null);
+        badge(a, 'db', null);
         a.hl('db', false);
         await a.par(a.show('fw'), ...[0, 1, 2, 3].flatMap((r) => [a.show('el' + r), a.show('er' + r)]), a.fade(T.g, 1, 400));
         a.caption('경비실 규칙표: 누가 · 어디로 · 몇 번 문 → 허용/차단');
@@ -255,14 +263,14 @@ export default {
         await setRules(a, RULES_OPEN, { slow: true });
         await inbound(a, OUT.bot, IN.db, ':3306', 'red', { hit: 1, ok: true, say: '규칙 2 일치 → 허용' });
         a.hl('db', true, 'red');
-        a.badge('db', '침입!', 'red');
+        badge(a, 'db', '침입!', 'red');
         await row(a, 3, '⚠ 막을 목록에 빠뜨린 문(3306)은 그대로 열려 있어요', { color: 'red' });
         a.caption('막을 목록에 없는 문은 활짝 열림');
         await a.flash('db');
         await a.wait(900);
         a.caption('그래서 원칙은 기본 차단 — 다시 되돌려요');
         a.hl('db', false);
-        a.badge('db', null);
+        badge(a, 'db', null);
         a.setText(T.title, '방화벽 규칙표 · 들어오는 방향 — 위에서부터 차례로 확인');
         await setRules(a, RULES_IN);
         await a.wait(400);
@@ -283,7 +291,7 @@ export default {
         a.hl('pc', false);
         a.caption('답장 도착 — 장부에 있는 연결이면 통과');
         await inbound(a, OUT.site, IN.pc, '답장', 'green', { order: [3], hit: 3, ok: true, say: '상태표 일치 → 통과' });
-        a.badge('pc', '받음 ✓', 'green');
+        badge(a, 'pc', '받음 ✓', 'green');
         await a.flash('pc');
         a.caption('답장인 척 먼저 들어오면? 장부에 없음 → 규칙대로');
         await inbound(a, OUT.bot, IN.pc, '가짜답장', 'red', { order: [3, 0, 1, 2], hit: 2, ok: false, say: '규칙 3 일치 → 차단' });
@@ -296,10 +304,10 @@ export default {
       deep: '이그레스(egress) 필터링은 C2(명령·제어) 통신과 데이터 유출을 줄이는 기본 통제입니다. 요즘 악성코드는 443·DNS처럼 원래 열려 있는 길로 나가는 경우가 많아 포트만 막아서는 부족하고, 목적지 허용 목록·프록시 경유·DNS 필터링·평판(위협 인텔리전스) 차단을 함께 씁니다. 차단된 아웃바운드 로그는 감염 PC를 찾는 중요한 침해 지표(IoC)예요.',
       async run(a) {
         a.clear();
-        a.badge('pc', null);
+        badge(a, 'pc', null);
         dropRow(3);
         a.setNode('pc', { label: '💻 감염 PC', color: 'red' });
-        a.badge('pc', '악성코드', 'red');
+        badge(a, 'pc', '악성코드', 'red');
         a.setText(T.title, '방화벽 규칙표 · 나가는 방향(아웃바운드)');
         await setRules(a, RULES_OUT0, { slow: true });
         a.caption('감염 PC가 공격자 서버에 몰래 연락 — 나가는 건 모두 허용 중');
@@ -323,7 +331,7 @@ export default {
       deep: '네트워크 방화벽은 L3/L4(IP·포트·상태)만 봐서 443으로 오는 SQL 인젝션은 그대로 통과시키고, 그건 HTTP를 해석하는 WAF의 몫입니다. NGFW는 앱 식별·사용자 연동·IPS를 묶었지만 암호화된 내용까지 보려면 TLS 복호화 검사가 필요해요. IDS는 미러링한 복사본을 보고 알리고, IPS는 인라인에서 막는 대신 오탐하면 정상 트래픽도 끊습니다. 실무에선 이들을 경계에 겹겹이 두고, 서버마다 호스트 방화벽(윈도우 방화벽, 리눅스 nftables 등)도 켜요.',
       async run(a) {
         a.clear();
-        a.badge('pc', null);
+        badge(a, 'pc', null);
         a.caption('같은 "방화벽"이라도 보는 깊이가 달라요');
         await a.par(...DIAGRAM.map((id) => a.hide(id, 350)), a.fade(T.g, 0, 350));
         a.text(30, 34, '어디까지 들여다보나 — 방화벽 계열 장비 비교', { size: 14, weight: 800, anchor: 'start', color: 'red' });
@@ -359,14 +367,14 @@ export default {
       async run(a) {
         a.clear();
         a.setNode('pc', { label: '💻 직원 PC', color: 'blue' });
-        a.badge('pc', null);
+        badge(a, 'pc', null);
         a.setText(T.title, '방화벽 규칙표 · 들어오는 방향 — 1년 뒤');
         await setRules(a, RULES_TEMP);
         await a.par(...DIAGRAM.map((id) => a.show(id, 350)), a.fade(T.g, 1, 350));
         a.caption('작년에 "잠깐만" 열어 둔 3번 줄이 아직 남아 있어요');
         await inbound(a, OUT.bot, IN.db, ':3306', 'red', { hit: 2, ok: true, say: '규칙 3 일치 → 허용' });
         a.hl('db', true, 'red');
-        a.badge('db', '침입!', 'red');
+        badge(a, 'db', '침입!', 'red');
         await a.flash('db');
         a.caption('점검: 아무도 안 쓰는 임시 규칙을 지워요');
         const r3 = T.rows[2];
@@ -374,7 +382,7 @@ export default {
         await a.wait(350);
         await a.tween(300, (k) => (r3.g.style.opacity = 1 - k));
         a.hl('db', false);
-        a.badge('db', null);
+        badge(a, 'db', null);
         await setRules(a, RULES_IN);
         await inbound(a, OUT.bot, IN.db, ':3306', 'red', { hit: 2, ok: false, say: '규칙 3 일치 → 차단' });
         await row(a, 3, '📝 로그: 198.51.100.66(공격 봇) → 데이터베이스:3306 차단', { color: 'amber' });
